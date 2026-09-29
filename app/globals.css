@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -126,5 +126,24 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* Faint fintech-terminal grid backdrop, meant to sit behind hero/glow sections. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, oklch(1 0 0 / 4%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(1 0 0 / 4%) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Soft radial glow in the brand green, for hero/CTA backdrops. */
+  .bg-glow {
+    background-image: radial-gradient(
+      600px circle at 50% 0%,
+      oklch(0.6 0.14 155 / 18%),
+      transparent 70%
+    );
   }
 }
