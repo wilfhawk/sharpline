@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
   const minEvPercent = Number(params.get("minEv") ?? 2);
   // TODO(Phase 5): derive tier from the authenticated user's subscription_tier
   // instead of a query param, once Stripe/Supabase subscription gating lands.
-  const tier: SubscriptionTier = params.get("tier") === "pro" ? "pro" : "free";
+  // Defaults to "pro" (ungated) since there's no real auth/subscription yet.
+  const tier: SubscriptionTier = params.get("tier") === "free" ? "free" : "pro";
 
   const provider = getOddsProvider();
   const data = await provider.fetchData();
