@@ -6,6 +6,7 @@ import { FilterBar } from "./FilterBar";
 import { MockDataBanner } from "./MockDataBanner";
 import { OpportunityTable } from "./OpportunityTable";
 import { OpportunityCard } from "./OpportunityCard";
+import { StatsRow } from "./StatsRow";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function Dashboard() {
@@ -42,6 +43,10 @@ export function Dashboard() {
       </div>
 
       {data?.meta.isMock && <MockDataBanner />}
+
+      {!isLoading && !isError && opportunities.length > 0 && (
+        <StatsRow opportunities={opportunities} sportsbookCount={sportsbooks.length} />
+      )}
 
       <FilterBar
         sports={sports}

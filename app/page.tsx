@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/layout/Logo";
 import {
   ArrowRight,
   Check,
@@ -67,17 +68,6 @@ const PRICING = [
     highlighted: true,
   },
 ];
-
-function Logo() {
-  return (
-    <span className="flex items-center gap-1.5 text-sm font-semibold tracking-wide">
-      <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <TrendingUp className="size-3.5" />
-      </span>
-      SharpLine
-    </span>
-  );
-}
 
 export default function LandingPage() {
   return (
