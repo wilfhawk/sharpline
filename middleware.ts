@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 /**
  * Geofencing hook stub (see COMPLIANCE.md) — always allows for now. Wire this up to a
@@ -11,6 +12,12 @@ function geoCheck(_request: NextRequest): { allowed: boolean } {
 
 export async function middleware(request: NextRequest) {
   geoCheck(request);
+
+  // No Supabase project wired up yet (mock-data-only dev mode) — nothing to check.
+  if (!isSupabaseConfigured()) {
+    return;
+  }
+
   return updateSession(request);
 }
 

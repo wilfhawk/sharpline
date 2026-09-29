@@ -19,6 +19,12 @@ function hoursFromNow(hours: number): string {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 }
 
+/** Simulates a live feed: each snapshot lands somewhere in the last 0-20 minutes. */
+function jitteredRecentTimestamp(): string {
+  const minutesAgo = Math.random() * 20;
+  return new Date(Date.now() - minutesAgo * 60 * 1000).toISOString();
+}
+
 interface EventSeed {
   id: string;
   sport: string;
@@ -177,25 +183,32 @@ function buildTotalMarket(seed: EventSeed, event: EventSummary): TwoWayMarket {
   };
 }
 
-function buildMoneylineQuotes(seed: EventSeed, marketId: string, timestamp: string): OddsQuote[] {
+function buildMoneylineQuotes(seed: EventSeed, marketId: string): OddsQuote[] {
   const bookOdds = MONEYLINE_ODDS[seed.id];
   return Object.entries(bookOdds).map(([sportsbookId, [home, away]]) => ({
     marketId,
     sportsbookId,
     oddsDecimalA: americanToDecimal(home),
     oddsDecimalB: americanToDecimal(away),
-    timestamp,
+    // Pinnacle (the fair-odds reference) always reflects the freshest line.
+    timestamp:
+      sportsbookId === "sb-pinnacle"
+        ? new Date().toISOString()
+        : jitteredRecentTimestamp(),
   }));
 }
 
-function buildTotalQuotes(seed: EventSeed, marketId: string, timestamp: string): OddsQuote[] {
+function buildTotalQuotes(seed: EventSeed, marketId: string): OddsQuote[] {
   const bookOdds = TOTAL_ODDS[seed.id];
   return Object.entries(bookOdds).map(([sportsbookId, [over, under]]) => ({
     marketId,
     sportsbookId,
     oddsDecimalA: americanToDecimal(over),
     oddsDecimalB: americanToDecimal(under),
-    timestamp,
+    timestamp:
+      sportsbookId === "sb-pinnacle"
+        ? new Date().toISOString()
+        : jitteredRecentTimestamp(),
   }));
 }
 
@@ -203,7 +216,6 @@ function buildTotalQuotes(seed: EventSeed, marketId: string, timestamp: string):
 export function buildMockOddsProviderData(): OddsProviderData {
   const events = buildEvents();
   const eventById = new Map(events.map((e) => [e.id, e]));
-  const timestamp = new Date().toISOString();
 
   const markets: TwoWayMarket[] = [];
   const quotes: OddsQuote[] = [];
@@ -213,11 +225,11 @@ export function buildMockOddsProviderData(): OddsProviderData {
 
     const moneylineMarket = buildMoneylineMarket(seed, event);
     markets.push(moneylineMarket);
-    quotes.push(...buildMoneylineQuotes(seed, moneylineMarket.id, timestamp));
+    quotes.push(...buildMoneylineQuotes(seed, moneylineMarket.id));
 
     const totalMarket = buildTotalMarket(seed, event);
     markets.push(totalMarket);
-    quotes.push(...buildTotalQuotes(seed, totalMarket.id, timestamp));
+    quotes.push(...buildTotalQuotes(seed, totalMarket.id));
   }
 
   return { sportsbooks: SPORTSBOOKS, events, markets, quotes };
