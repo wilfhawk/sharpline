@@ -1,4 +1,4 @@
-export type MarketType = "moneyline" | "spread" | "total";
+export type MarketType = "moneyline" | "spread" | "total" | "player_prop";
 export type EventStatus = "upcoming" | "live" | "final";
 export type SubscriptionTier = "free" | "pro";
 export type DevigMethod = "multiplicative" | "power";
