@@ -6,6 +6,8 @@ import { evColorClasses, formatAmericanOdds, formatEvPercent } from "@/lib/displ
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { LineMovementChart } from "./LineMovementChart";
+import { StakeSizer } from "./StakeSizer";
+import { LogBetButton } from "./LogBetButton";
 import type { EvOpportunity } from "@/lib/types";
 
 export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity }) {
@@ -42,6 +44,11 @@ export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity 
             opportunity.id
           )}
         />
+      </div>
+
+      <div className="flex flex-col gap-2 sm:col-span-2">
+        <StakeSizer opportunity={opportunity} />
+        <LogBetButton opportunity={opportunity} />
       </div>
     </div>
   );

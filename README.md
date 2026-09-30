@@ -34,6 +34,7 @@ data; `middleware.ts` skips the Supabase session check entirely):
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `NEXT_PUBLIC_STRIPE_PRICE_PRO` | Checkout, billing portal, and the subscription webhook (test mode) |
 | `ODDS_PROVIDER` | Odds data source — `mock` (default) or `the-odds-api` (see below) |
 | `ODDS_API_KEY` / `ODDS_API_SPORTS` / `ODDS_API_REGIONS` / `ODDS_API_CACHE_SECONDS` | Live odds via [The Odds API](https://the-odds-api.com), only used when `ODDS_PROVIDER=the-odds-api` |
+| `ODDS_API_EXTRA_MARKETS` | Opt-in player-prop market keys added to the same bulk odds call (e.g. `player_pass_tds,player_points`); adds to per-refresh credit cost |
 | `AGE_GATE_MINIMUM` | Minimum age enforced by the signup age-gate modal (default 21) |
 
 To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`

@@ -145,4 +145,43 @@ describe("mapTheOddsApiEvents", () => {
     expect(data.markets).toHaveLength(0);
     expect(data.quotes).toHaveLength(0);
   });
+
+  it("maps a player-prop market into one two-way market per player, grouped by description+point", () => {
+    const eventWithProps: RawOddsApiEvent = {
+      ...NFL_EVENT,
+      bookmakers: [
+        {
+          key: "draftkings",
+          title: "DraftKings",
+          last_update: "2099-01-01T17:05:00Z",
+          markets: [
+            {
+              key: "player_pass_tds",
+              outcomes: [
+                { name: "Over", description: "Josh Allen", price: 1.9, point: 2.5 },
+                { name: "Under", description: "Josh Allen", price: 1.9, point: 2.5 },
+                { name: "Over", description: "Patrick Mahomes", price: 1.8, point: 1.5 },
+                { name: "Under", description: "Patrick Mahomes", price: 2.0, point: 1.5 },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const data = mapTheOddsApiEvents([eventWithProps]);
+    const propMarkets = data.markets.filter((m) => m.marketType === "player_prop");
+    expect(propMarkets).toHaveLength(2);
+
+    const allen = propMarkets.find((m) => m.sideALabel.includes("Josh Allen"));
+    expect(allen).toMatchObject({
+      lineValue: 2.5,
+      sideALabel: "Josh Allen Over 2.5 Pass Tds",
+      sideBLabel: "Josh Allen Under 2.5 Pass Tds",
+    });
+
+    const allenQuote = data.quotes.find((q) => q.marketId === allen?.id);
+    expect(allenQuote?.oddsDecimalA).toBeCloseTo(1.9);
+    expect(allenQuote?.oddsDecimalB).toBeCloseTo(1.9);
+  });
 });

@@ -44,6 +44,10 @@ export function getOddsProvider(): OddsProvider {
         regions: process.env.ODDS_API_REGIONS ?? "us,eu",
         baseUrl: process.env.ODDS_API_BASE_URL ?? "https://api.the-odds-api.com/v4",
         cacheSeconds: Number(process.env.ODDS_API_CACHE_SECONDS ?? 60),
+        extraMarkets: (process.env.ODDS_API_EXTRA_MARKETS ?? "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
       });
     }
     default:

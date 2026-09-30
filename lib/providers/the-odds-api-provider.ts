@@ -5,6 +5,8 @@ export interface RawOddsApiOutcome {
   name: string;
   price: number;
   point?: number;
+  /** Player name for player-prop markets (e.g. player_points); absent on h2h/spreads/totals. */
+  description?: string;
 }
 
 export interface RawOddsApiMarket {
@@ -56,6 +58,15 @@ function deriveStatus(commenceTime: string): EventStatus {
 
 function formatSignedPoint(point: number): string {
   return point > 0 ? `+${point}` : String(point);
+}
+
+/** e.g. "player_pass_tds" -> "Pass Tds", "player_points" -> "Points". */
+function humanizePropMarketKey(marketKey: string): string {
+  return marketKey
+    .replace(/^player_/, "")
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 function mapEvent(raw: RawOddsApiEvent): EventSummary {
@@ -139,6 +150,50 @@ function buildMarket(
 }
 
 /**
+ * Builds one result per player+line for a player-prop market (e.g. "player_points"),
+ * which packs every player's Over/Under outcomes into a single raw market entry
+ * distinguished only by `description` (the player name). Unlike h2h/spreads/totals,
+ * one rawMarket can yield many two-way markets here.
+ */
+function buildPlayerPropMarkets(
+  raw: RawOddsApiMarket,
+  event: RawOddsApiEvent
+): MarketBuildResult[] {
+  const groups = new Map<string, RawOddsApiOutcome[]>();
+  for (const outcome of raw.outcomes) {
+    if (!outcome.description || outcome.point === undefined) continue;
+    const groupKey = `${outcome.description}|${outcome.point}`;
+    const group = groups.get(groupKey);
+    if (group) group.push(outcome);
+    else groups.set(groupKey, [outcome]);
+  }
+
+  const propLabel = humanizePropMarketKey(raw.key);
+  const results: MarketBuildResult[] = [];
+
+  for (const outcomes of groups.values()) {
+    if (outcomes.length !== 2) continue;
+    const sideAOutcome = outcomes.find((o) => o.name.toLowerCase() === "over");
+    const sideBOutcome = outcomes.find((o) => o.name.toLowerCase() === "under");
+    if (!sideAOutcome || !sideBOutcome) continue;
+
+    const player = sideAOutcome.description!;
+    const point = sideAOutcome.point!;
+    results.push({
+      marketType: "player_prop",
+      lineValue: point,
+      sideALabel: `${player} Over ${point} ${propLabel}`,
+      sideBLabel: `${player} Under ${point} ${propLabel}`,
+      sideAOutcome,
+      sideBOutcome,
+      lineKey: `prop:${raw.key}:${player}:${point}`,
+    });
+  }
+
+  return results;
+}
+
+/**
  * Maps raw The Odds API events into this app's OddsProviderData shape.
  * Pure/hermetic: no network calls, safe to unit test with fixture data.
  */
@@ -164,31 +219,36 @@ export function mapTheOddsApiEvents(rawEvents: RawOddsApiEvent[]): OddsProviderD
       }
 
       for (const rawMarket of bookmaker.markets) {
-        const built = buildMarket(rawMarket, rawEvent);
-        if (!built) continue;
+        const isFeaturedMarket =
+          rawMarket.key === "h2h" || rawMarket.key === "spreads" || rawMarket.key === "totals";
+        const built = isFeaturedMarket
+          ? [buildMarket(rawMarket, rawEvent)].filter((m): m is MarketBuildResult => m !== null)
+          : buildPlayerPropMarkets(rawMarket, rawEvent);
 
-        const marketId = `${rawEvent.id}:${built.lineKey}`;
-        let market = marketByLineKey.get(marketId);
-        if (!market) {
-          market = {
-            id: marketId,
-            event,
-            marketType: built.marketType,
-            lineValue: built.lineValue,
-            sideALabel: built.sideALabel,
-            sideBLabel: built.sideBLabel,
-          };
-          marketByLineKey.set(marketId, market);
+        for (const result of built) {
+          const marketId = `${rawEvent.id}:${result.lineKey}`;
+          let market = marketByLineKey.get(marketId);
+          if (!market) {
+            market = {
+              id: marketId,
+              event,
+              marketType: result.marketType,
+              lineValue: result.lineValue,
+              sideALabel: result.sideALabel,
+              sideBLabel: result.sideBLabel,
+            };
+            marketByLineKey.set(marketId, market);
+          }
+
+          quotes.push({
+            marketId,
+            sportsbookId: bookmaker.key,
+            oddsDecimalA: result.sideAOutcome.price,
+            oddsDecimalB: result.sideBOutcome.price,
+            timestamp:
+              rawMarket.last_update ?? bookmaker.last_update ?? new Date().toISOString(),
+          });
         }
-
-        quotes.push({
-          marketId,
-          sportsbookId: bookmaker.key,
-          oddsDecimalA: built.sideAOutcome.price,
-          oddsDecimalB: built.sideBOutcome.price,
-          timestamp:
-            rawMarket.last_update ?? bookmaker.last_update ?? new Date().toISOString(),
-        });
       }
     }
   }
@@ -208,6 +268,8 @@ export interface TheOddsApiConfig {
   baseUrl: string;
   /** How long Next.js may serve a cached response before re-fetching, protecting the API quota. */
   cacheSeconds: number;
+  /** Opt-in player-prop market keys (e.g. "player_points") added to the same bulk /odds call. Each adds to the per-refresh credit cost (markets x regions) — off by default. */
+  extraMarkets: string[];
 }
 
 /** Real odds provider backed by The Odds API (https://the-odds-api.com). */
@@ -228,7 +290,7 @@ export class TheOddsApiProvider implements OddsProvider {
     const url = new URL(`${this.config.baseUrl}/sports/${sportKey}/odds/`);
     url.searchParams.set("apiKey", this.config.apiKey);
     url.searchParams.set("regions", this.config.regions);
-    url.searchParams.set("markets", "h2h,spreads,totals");
+    url.searchParams.set("markets", ["h2h", "spreads", "totals", ...this.config.extraMarkets].join(","));
     url.searchParams.set("oddsFormat", "decimal");
     url.searchParams.set("dateFormat", "iso");
 
