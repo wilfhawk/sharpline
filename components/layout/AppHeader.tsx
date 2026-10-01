@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
-import { getRequestTier } from "@/lib/get-request-tier";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { TierToggle } from "./TierToggle";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -10,9 +9,7 @@ const NAV_LINKS = [
   { href: "/account", label: "Account" },
 ];
 
-export async function AppHeader() {
-  const tier = isSupabaseConfigured() ? await getRequestTier() : null;
-
+export function AppHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-border/60 bg-background/80 backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
@@ -20,18 +17,7 @@ export async function AppHeader() {
           <Link href="/dashboard">
             <Logo />
           </Link>
-          {tier && (
-            <Link
-              href="/account"
-              className={
-                tier === "pro"
-                  ? "rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400"
-                  : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-              }
-            >
-              {tier === "pro" ? "PRO" : "FREE"}
-            </Link>
-          )}
+          <TierToggle />
         </div>
         <nav className="flex items-center gap-4 text-sm">
           {NAV_LINKS.map((link) => (

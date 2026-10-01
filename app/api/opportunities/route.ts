@@ -13,7 +13,14 @@ export async function GET(request: NextRequest) {
   const marketType = params.get("marketType");
   const minEvPercent = Number(params.get("minEv") ?? 2);
   const liveOnly = params.get("liveOnly") === "true";
-  const tier = await getRequestTier();
+  // Public "preview as Free/Pro" toggle (see hooks/useTierPreview.ts) — an
+  // intentional, visible, no-login demo control, not a real entitlement
+  // check. Falls back to the viewer's real subscription tier when unset.
+  const tierOverride = params.get("tier");
+  const tier =
+    tierOverride === "free" || tierOverride === "pro"
+      ? tierOverride
+      : await getRequestTier();
 
   const provider = getOddsProvider();
   const data = await provider.fetchData();
