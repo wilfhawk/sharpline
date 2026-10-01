@@ -66,6 +66,9 @@ export async function GET(request: NextRequest) {
             debugRawOpportunityCount: rawOpportunityCount,
             debugMaxEvPercentBeforeThreshold: maxEvPercent,
             debugMinEvThreshold: minEvPercent,
+            debugConfigRegions: process.env.ODDS_API_REGIONS ?? "us,eu",
+            debugConfigSports: process.env.ODDS_API_SPORTS ?? "americanfootball_nfl,basketball_nba",
+            debugConfigSharpBooks: process.env.ODDS_API_SHARP_BOOKS ?? "pinnacle",
           }
         : {}),
     },
