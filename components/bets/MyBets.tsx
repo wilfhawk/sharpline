@@ -113,22 +113,34 @@ function BetRow({ bet }: { bet: LoggedBet }) {
             {bet.clv_percent >= 0 ? "+" : ""}
             {bet.clv_percent.toFixed(2)}%
           </span>
+          <span className="ml-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-xs font-normal text-emerald-400">
+            Closing line captured
+          </span>
         </p>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min={1}
-            max={99}
-            placeholder="Closing fair %"
-            value={closingPercent}
-            onChange={(e) => setClosingPercent(e.target.value)}
-            className="w-32"
-          />
-          <Button size="sm" onClick={handleClose} disabled={closeBet.isPending}>
-            {closeBet.isPending ? "Computing..." : "Compute CLV"}
-          </Button>
+      ) : bet.closing_line_status === "missed" ? (
+        <div className="flex flex-col gap-1.5">
+          <span className="w-fit rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-300">
+            Closing line missed — enter it manually
+          </span>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={1}
+              max={99}
+              placeholder="Closing fair %"
+              value={closingPercent}
+              onChange={(e) => setClosingPercent(e.target.value)}
+              className="w-32"
+            />
+            <Button size="sm" onClick={handleClose} disabled={closeBet.isPending}>
+              {closeBet.isPending ? "Computing..." : "Compute CLV"}
+            </Button>
+          </div>
         </div>
+      ) : (
+        <span className="w-fit rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+          Pending — closing line captures automatically near kickoff
+        </span>
       )}
     </Card>
   );

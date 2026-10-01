@@ -58,6 +58,12 @@ export async function POST(request: NextRequest) {
       odds_decimal: values.oddsDecimal,
       stake: values.stake,
       fair_probability_at_bet: values.fairProbabilityAtBet,
+      market_id: values.marketId ?? null,
+      sportsbook_slug: values.sportsbookSlug ?? null,
+      side: values.side ?? null,
+      event_start_time: values.eventStartTime ?? null,
+      // No market_id means the closing-line cron can never find this bet again.
+      closing_line_status: values.marketId ? "pending" : "missed",
     })
     .select("*")
     .single();

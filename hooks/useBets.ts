@@ -16,6 +16,12 @@ export interface LoggedBet {
   closing_fair_probability: number | null;
   clv_percent: number | null;
   closed_at: string | null;
+  market_id: string | null;
+  sportsbook_slug: string | null;
+  side: "A" | "B" | null;
+  event_start_time: string | null;
+  closing_line_status: "pending" | "captured" | "missed";
+  closing_captured_at: string | null;
 }
 
 async function fetchBets(): Promise<LoggedBet[]> {

@@ -39,8 +39,12 @@ export function LogBetButton({ opportunity }: { opportunity: EvOpportunity }) {
         oddsDecimal: opportunity.oddsDecimal,
         stake,
         fairProbabilityAtBet: opportunity.fairProbability,
+        marketId: opportunity.market.id,
+        sportsbookSlug: opportunity.sportsbook.slug,
+        side: opportunity.side,
+        eventStartTime: opportunity.event.startTime,
       });
-      toast.success("Bet logged — track its CLV from My Bets once it closes.");
+      toast.success("Bet logged — its closing line will be captured automatically near kickoff.");
       setOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't log this bet.");
