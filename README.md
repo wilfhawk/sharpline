@@ -33,17 +33,45 @@ data; `middleware.ts` skips the Supabase session check entirely):
 | Variable | Enables |
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | Auth (email + Google), the `users` profile table, RLS-protected market data |
-| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `NEXT_PUBLIC_STRIPE_PRICE_PRO` | Checkout, billing portal, and the subscription webhook (test mode) |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Checkout, billing portal, and the subscription webhook (test mode) |
+| `NEXT_PUBLIC_STRIPE_PRICE_PLUS_MONTHLY` / `_ANNUAL` / `_PRO_MONTHLY` / `_PRO_ANNUAL` | The 4 Stripe Prices backing the Plus/Pro × monthly/annual checkout options (see below) |
 | `ODDS_PROVIDER` | Odds data source — `mock` (default) or `the-odds-api` (see below) |
 | `ODDS_API_KEY` / `ODDS_API_SPORTS` / `ODDS_API_REGIONS` / `ODDS_API_CACHE_SECONDS` | Live odds via [The Odds API](https://the-odds-api.com), only used when `ODDS_PROVIDER=the-odds-api` |
 | `ODDS_API_EXTRA_MARKETS` | Opt-in player-prop market keys added to the same bulk odds call (e.g. `player_pass_tds,player_points`); adds to per-refresh credit cost |
 | `ODDS_API_SHARP_BOOKS` | Priority-ordered sharp reference bookmaker keys (default `pinnacle`), e.g. `pinnacle,circasports,betonlineag` — the engine falls back to the next book in the list when a higher-priority one hasn't posted a line for a market |
+| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | Email alerts (`app/api/cron/alerts`) via [Resend](https://resend.com); alerts silently no-op when unset |
+| `CRON_SECRET` | Protects `/api/cron/*` routes — Vercel sends it automatically as a Bearer token once set, see `vercel.json` |
 | `AGE_GATE_MINIMUM` | Minimum age enforced by the signup age-gate modal (default 21) |
 
-To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`
-against your project, then add `<your-domain>/api/auth/callback` as an
+To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`,
+`0002_user_extensions.sql`, and `0003_plus_tier_alerts_clv.sql` (in that
+order) against your project, then add `<your-domain>/api/auth/callback` as an
 authorized redirect URI for the Google provider in your Supabase Auth
 settings (see `app/api/auth/callback/route.ts`).
+
+### Setting up Plus/Pro billing (Stripe)
+
+1. In the Stripe **test mode** dashboard, create 2 Products: "SharpLine Plus"
+   and "SharpLine Pro".
+2. Add 2 recurring Prices to each (USD): a monthly price, and an annual price
+   at 10x the monthly amount (2 months free) — e.g. Plus $25/mo + $250/yr,
+   Pro $49/mo + $490/yr.
+3. Copy each Price ID into the 4 `NEXT_PUBLIC_STRIPE_PRICE_*` env vars above.
+4. The existing `/api/stripe/webhook` automatically maps whichever Price a
+   customer checks out with back to the right tier — no code changes needed
+   when prices change, just update the env vars.
+
+### Setting up email alerts (Resend + Vercel Cron)
+
+1. Sign up at [resend.com](https://resend.com), verify a sending domain (or
+   use their shared test domain for development), and create an API key.
+2. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in your environment.
+3. `vercel.json` already schedules `/api/cron/alerts` (every 15 min) and
+   `/api/cron/capture-closing-lines` (hourly) — Vercel picks this up
+   automatically on deploy once the project is on a plan that supports Cron
+   Jobs.
+4. Set a `CRON_SECRET` env var (any random string) so only Vercel's own cron
+   invocations can trigger these routes.
 
 ### Enabling live odds (The Odds API)
 
