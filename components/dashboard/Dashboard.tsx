@@ -5,6 +5,7 @@ import { useOpportunities, type OpportunityFilters } from "@/hooks/useOpportunit
 import { useOpportunityAlerts } from "@/hooks/useOpportunityAlerts";
 import { FilterBar } from "./FilterBar";
 import { MockDataBanner } from "./MockDataBanner";
+import { FreeTierBanner } from "./FreeTierBanner";
 import { OpportunityTable } from "./OpportunityTable";
 import { OpportunityCard } from "./OpportunityCard";
 import { StatsRow } from "./StatsRow";
@@ -52,6 +53,7 @@ export function Dashboard() {
       </div>
 
       {data?.meta.isMock && <MockDataBanner />}
+      {data?.meta.tier === "free" && <FreeTierBanner />}
 
       <Tabs defaultValue="ev" className="gap-4">
         <TabsList>

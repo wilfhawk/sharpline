@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBets, useCloseBet, useDeleteBet, type LoggedBet } from "@/hooks/useBets";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -100,8 +101,14 @@ function BetRow({ bet }: { bet: LoggedBet }) {
       </div>
 
       {bet.clv_percent !== null ? (
-        <p className="text-sm font-medium">
-          CLV:{" "}
+        <p className="flex items-center gap-1 text-sm font-medium">
+          CLV
+          <InfoTooltip>
+            Closing Line Value — how much better your price was than the
+            market&apos;s final (closing) price. Positive CLV over time is the
+            strongest predictor of long-run betting profitability.
+          </InfoTooltip>
+          :{" "}
           <span className={bet.clv_percent >= 0 ? "text-emerald-400" : "text-red-400"}>
             {bet.clv_percent >= 0 ? "+" : ""}
             {bet.clv_percent.toFixed(2)}%

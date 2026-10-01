@@ -19,12 +19,18 @@ import {
 } from "@/lib/display";
 import type { EvOpportunity } from "@/lib/types";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 type SortKey = "event" | "evPercent" | "oddsDecimal" | "startTime";
 
-const COLUMNS: { key: SortKey; label: string }[] = [
+const COLUMNS: { key: SortKey; label: string; definition?: string }[] = [
   { key: "event", label: "Event" },
-  { key: "evPercent", label: "EV%" },
+  {
+    key: "evPercent",
+    label: "EV%",
+    definition:
+      "Expected Value — the edge this price has over the sharp book's de-vigged fair odds. Positive EV% means this bet is mathematically profitable long-run.",
+  },
   { key: "oddsDecimal", label: "Odds" },
   { key: "startTime", label: "Time to start" },
 ];
@@ -74,19 +80,30 @@ export function OpportunityTable({
           <TableRow className="hover:bg-transparent">
             {COLUMNS.map((col) => (
               <TableHead key={col.key}>
-                <button
-                  type="button"
-                  onClick={() => toggleSort(col.key)}
-                  className="flex items-center gap-1 hover:text-foreground"
-                >
-                  {col.label}
-                  <SortIcon active={sortKey === col.key} dir={sortDir} />
-                </button>
+                <span className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort(col.key)}
+                    className="flex items-center gap-1 hover:text-foreground"
+                  >
+                    {col.label}
+                    <SortIcon active={sortKey === col.key} dir={sortDir} />
+                  </button>
+                  {col.definition && <InfoTooltip>{col.definition}</InfoTooltip>}
+                </span>
               </TableHead>
             ))}
             <TableHead>Market</TableHead>
             <TableHead>Sportsbook</TableHead>
-            <TableHead>Fair Odds</TableHead>
+            <TableHead>
+              <span className="flex items-center gap-1">
+                Fair Odds
+                <InfoTooltip>
+                  The sharp book&apos;s (e.g. Pinnacle) de-vigged odds — the
+                  benchmark &quot;true&quot; price this opportunity is compared against.
+                </InfoTooltip>
+              </span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -2,6 +2,7 @@
 
 import { useBankroll } from "@/hooks/useBankroll";
 import { recommendedStake } from "@/lib/kelly";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { EvOpportunity } from "@/lib/types";
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
@@ -33,7 +34,14 @@ export function StakeSizer({ opportunity }: { opportunity: EvOpportunity }) {
         />
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="text-muted-foreground">Suggested stake (¼ Kelly)</span>
+        <span className="flex items-center gap-1 text-muted-foreground">
+          Suggested stake (¼ Kelly)
+          <InfoTooltip>
+            The Kelly Criterion sizes your bet as a fraction of your bankroll
+            based on your edge — quarter-Kelly bets 1/4 of that amount to
+            reduce variance while still growing your bankroll over time.
+          </InfoTooltip>
+        </span>
         <span className="font-medium tabular-nums">
           {stake > 0 ? CURRENCY_FORMATTER.format(stake) : "—"}
         </span>

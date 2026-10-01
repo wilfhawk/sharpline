@@ -44,6 +44,14 @@ describe("formatTimeToStart", () => {
   it("formats whole hours only", () => {
     expect(formatTimeToStart("2026-09-29T14:00:00Z", now)).toBe("in 2h");
   });
+
+  it("formats days and hours once at least a day away", () => {
+    expect(formatTimeToStart("2026-10-01T16:00:00Z", now)).toBe("in 2d 4h");
+  });
+
+  it("formats whole days only", () => {
+    expect(formatTimeToStart("2026-10-01T12:00:00Z", now)).toBe("in 2d");
+  });
 });
 
 describe("evColorClasses", () => {

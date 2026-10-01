@@ -1,7 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/account"];
+// "/dashboard" is intentionally NOT protected — anonymous visitors can preview
+// the live free-tier dashboard (see lib/get-request-tier.ts) without signing up.
+const PROTECTED_PREFIXES = ["/account"];
 
 /** Refreshes the Supabase session cookie and redirects unauthenticated users away from protected routes. */
 export async function updateSession(request: NextRequest) {
