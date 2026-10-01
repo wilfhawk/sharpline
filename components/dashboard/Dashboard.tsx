@@ -9,6 +9,8 @@ import { OpportunityTable } from "./OpportunityTable";
 import { OpportunityCard } from "./OpportunityCard";
 import { StatsRow } from "./StatsRow";
 import { ArbitrageList } from "./ArbitrageList";
+import { MiddlesList } from "./MiddlesList";
+import { SgpBuilder } from "./SgpBuilder";
 import { SavedFilters } from "./SavedFilters";
 import { AlertSettings } from "./AlertSettings";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,6 +57,8 @@ export function Dashboard() {
         <TabsList>
           <TabsTrigger value="ev">+EV Opportunities</TabsTrigger>
           <TabsTrigger value="arbitrage">Arbitrage</TabsTrigger>
+          <TabsTrigger value="middles">Middles</TabsTrigger>
+          <TabsTrigger value="parlays">Parlay Builder</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ev" className="flex flex-col gap-4">
@@ -111,6 +115,14 @@ export function Dashboard() {
 
         <TabsContent value="arbitrage">
           <ArbitrageList />
+        </TabsContent>
+
+        <TabsContent value="middles">
+          <MiddlesList />
+        </TabsContent>
+
+        <TabsContent value="parlays">
+          <SgpBuilder opportunities={opportunities} />
         </TabsContent>
       </Tabs>
     </div>

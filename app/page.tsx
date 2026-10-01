@@ -3,12 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/layout/Logo";
+import { ComparisonTable } from "@/components/marketing/ComparisonTable";
+import { RoiCalculator } from "@/components/marketing/RoiCalculator";
 import {
   ArrowRight,
   Check,
+  Clock,
   LineChart,
   Radar,
   ShieldCheck,
+  Sparkles,
   TrendingUp,
 } from "lucide-react";
 
@@ -61,12 +65,19 @@ const PRICING = [
       "Live, real-time odds feed",
       "Unlimited +EV opportunities",
       "Line movement history",
-      "Alert settings (coming soon)",
+      "Arbitrage, middles & same-game parlay EV",
+      "Real-time opportunity alerts",
     ],
     cta: "Start Pro",
     href: "/signup",
     highlighted: true,
   },
+];
+
+const RISK_REVERSAL = [
+  { icon: Clock, text: "Cancel anytime, no lock-in contract" },
+  { icon: Sparkles, text: "Free tier forever — no card required to start" },
+  { icon: ShieldCheck, text: "Data & analysis only — we never touch your funds" },
 ];
 
 export default function LandingPage() {
@@ -76,6 +87,12 @@ export default function LandingPage() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Logo />
           <nav className="flex items-center gap-2 text-sm sm:gap-3">
+            <Link
+              href="/learn"
+              className="hidden text-muted-foreground hover:text-foreground sm:inline"
+            >
+              Learn
+            </Link>
             <Link
               href="/login"
               className="hidden text-muted-foreground hover:text-foreground sm:inline"
@@ -181,6 +198,39 @@ export default function LandingPage() {
         <p className="mt-2 text-center text-xs text-muted-foreground">
           Sample preview — sign up to see your own live dashboard.
         </p>
+      </section>
+
+      <section className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 pb-16 text-sm text-muted-foreground sm:px-6">
+        {RISK_REVERSAL.map(({ icon: Icon, text }) => (
+          <span key={text} className="flex items-center gap-2">
+            <Icon className="size-4 text-primary" />
+            {text}
+          </span>
+        ))}
+      </section>
+
+      <section className="mx-auto w-full max-w-4xl px-4 pb-16 sm:px-6">
+        <div className="mb-8 flex flex-col items-center gap-2 text-center">
+          <h2 className="text-2xl font-semibold sm:text-3xl">
+            How SharpLine compares
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Most +EV tools stop at one sharp reference book. SharpLine goes further.
+          </p>
+        </div>
+        <ComparisonTable />
+      </section>
+
+      <section className="mx-auto w-full max-w-2xl px-4 pb-16 sm:px-6">
+        <div className="mb-8 flex flex-col items-center gap-2 text-center">
+          <h2 className="text-2xl font-semibold sm:text-3xl">
+            What could your edge be worth?
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Plug in your numbers to see a simplified projection.
+          </p>
+        </div>
+        <RoiCalculator />
       </section>
 
       <section className="mx-auto w-full max-w-4xl px-4 pb-20 sm:px-6">

@@ -9,13 +9,26 @@ import type {
   TwoWayMarket,
 } from "./types";
 
+/**
+ * Picks the fair-odds benchmark quote among all sharp reference books that
+ * quoted this market, preferring the lowest `sharpPriority` (e.g. Pinnacle
+ * over Circa over BetOnline) and falling back to the next sharp book when the
+ * most-preferred one hasn't posted a line for this market.
+ */
 function findSharpQuote(
   marketQuotes: OddsQuote[],
   sportsbookById: Map<string, Sportsbook>
 ): OddsQuote | undefined {
-  return marketQuotes.find(
-    (q) => sportsbookById.get(q.sportsbookId)?.isSharpReference
-  );
+  let best: { quote: OddsQuote; priority: number } | undefined;
+  for (const quote of marketQuotes) {
+    const sportsbook = sportsbookById.get(quote.sportsbookId);
+    if (!sportsbook?.isSharpReference) continue;
+    const priority = sportsbook.sharpPriority ?? Number.MAX_SAFE_INTEGER;
+    if (!best || priority < best.priority) {
+      best = { quote, priority };
+    }
+  }
+  return best?.quote;
 }
 
 function groupQuotesByMarket(quotes: OddsQuote[]): Map<string, OddsQuote[]> {

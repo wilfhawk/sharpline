@@ -8,8 +8,14 @@ export interface Sportsbook {
   name: string;
   slug: string;
   logoUrl: string | null;
-  /** True for the sharp reference book (Pinnacle) used to derive fair odds. */
+  /** True for a sharp reference book (e.g. Pinnacle, Circa, BetOnline) used to derive fair odds. */
   isSharpReference: boolean;
+  /**
+   * Preference order among sharp reference books when more than one quotes a
+   * market (lower = more preferred, e.g. Pinnacle=0, Circa=1, BetOnline=2).
+   * Undefined/null for non-sharp books.
+   */
+  sharpPriority?: number | null;
 }
 
 export interface EventSummary {

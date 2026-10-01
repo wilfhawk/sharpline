@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getOddsProvider } from "@/lib/odds-provider";
 import { computeAllOpportunities } from "@/lib/opportunities";
 import { findPositiveEV } from "@/lib/ev-engine";
+import { filterLiveOnly } from "@/lib/live";
 import { applyTierGating } from "@/lib/subscription";
 import type { SubscriptionTier } from "@/lib/types";
 
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
   const sportsbookSlug = params.get("sportsbook");
   const marketType = params.get("marketType");
   const minEvPercent = Number(params.get("minEv") ?? 2);
+  const liveOnly = params.get("liveOnly") === "true";
   // TODO(Phase 5): derive tier from the authenticated user's subscription_tier
   // instead of a query param, once Stripe/Supabase subscription gating lands.
   // Defaults to "pro" (ungated) since there's no real auth/subscription yet.
@@ -33,6 +35,9 @@ export async function GET(request: NextRequest) {
     opportunities = opportunities.filter(
       (o) => o.market.marketType === marketType
     );
+  }
+  if (liveOnly) {
+    opportunities = filterLiveOnly(opportunities);
   }
 
   opportunities = findPositiveEV(opportunities, minEvPercent);

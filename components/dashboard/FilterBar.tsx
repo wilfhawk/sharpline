@@ -7,6 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import type { OpportunityFilters } from "@/hooks/useOpportunities";
 
 const EV_THRESHOLDS = [2, 3, 5, 10];
@@ -105,6 +107,14 @@ export function FilterBar({
           ))}
         </SelectContent>
       </Select>
+
+      <label className="flex items-center gap-2 rounded-md border border-border/60 px-3 py-2 text-sm">
+        <Checkbox
+          checked={filters.liveOnly ?? false}
+          onCheckedChange={(checked) => onChange({ ...filters, liveOnly: checked === true })}
+        />
+        <Label className="cursor-pointer font-normal">Live only</Label>
+      </label>
     </div>
   );
 }

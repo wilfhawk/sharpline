@@ -6,10 +6,10 @@ import {
   evColorClasses,
   formatAmericanOdds,
   formatEvPercent,
-  formatTimeToStart,
 } from "@/lib/display";
 import type { EvOpportunity } from "@/lib/types";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
+import { LiveOrTimeToStart } from "./OpportunityTable";
 
 export function OpportunityCard({ opportunity }: { opportunity: EvOpportunity }) {
   const [expanded, setExpanded] = useState(false);
@@ -38,7 +38,12 @@ export function OpportunityCard({ opportunity }: { opportunity: EvOpportunity })
       <div className="flex items-center justify-between text-sm tabular-nums text-muted-foreground">
         <span>Odds {formatAmericanOdds(opportunity.oddsDecimal)}</span>
         <span>Fair {formatAmericanOdds(opportunity.fairOddsDecimal)}</span>
-        <span>{formatTimeToStart(opportunity.event.startTime)}</span>
+        <span>
+          <LiveOrTimeToStart
+            status={opportunity.event.status}
+            startTime={opportunity.event.startTime}
+          />
+        </span>
       </div>
 
       {expanded && (

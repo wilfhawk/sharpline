@@ -8,12 +8,19 @@ import type {
 } from "./types";
 
 const SPORTSBOOKS: Sportsbook[] = [
-  { id: "sb-pinnacle", name: "Pinnacle", slug: "pinnacle", logoUrl: null, isSharpReference: true },
+  { id: "sb-pinnacle", name: "Pinnacle", slug: "pinnacle", logoUrl: null, isSharpReference: true, sharpPriority: 0 },
+  { id: "sb-circa", name: "Circa Sports", slug: "circa", logoUrl: null, isSharpReference: true, sharpPriority: 1 },
+  { id: "sb-betonline", name: "BetOnline", slug: "betonline", logoUrl: null, isSharpReference: true, sharpPriority: 2 },
   { id: "sb-draftkings", name: "DraftKings", slug: "draftkings", logoUrl: null, isSharpReference: false },
   { id: "sb-fanduel", name: "FanDuel", slug: "fanduel", logoUrl: null, isSharpReference: false },
   { id: "sb-betmgm", name: "BetMGM", slug: "betmgm", logoUrl: null, isSharpReference: false },
   { id: "sb-caesars", name: "Caesars", slug: "caesars", logoUrl: null, isSharpReference: false },
 ];
+
+/** Sharp reference books always reflect the freshest line (used for both timestamp freshness and priority fallback). */
+const SHARP_BOOK_IDS = new Set(
+  SPORTSBOOKS.filter((s) => s.isSharpReference).map((s) => s.id)
+);
 
 function hoursFromNow(hours: number): string {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
@@ -52,6 +59,8 @@ type TotalBookOdds = Record<string, [over: number, under: number]>;
 const MONEYLINE_ODDS: Record<string, MoneylineBookOdds> = {
   "evt-chiefs-bills": {
     "sb-pinnacle": [-130, 115],
+    "sb-circa": [-128, 112],
+    "sb-betonline": [-132, 118],
     "sb-draftkings": [-125, 105],
     "sb-fanduel": [-140, 120],
     "sb-betmgm": [-128, 110],
@@ -59,6 +68,8 @@ const MONEYLINE_ODDS: Record<string, MoneylineBookOdds> = {
   },
   "evt-lakers-warriors": {
     "sb-pinnacle": [145, -165],
+    "sb-circa": [148, -168],
+    "sb-betonline": [142, -162],
     "sb-draftkings": [150, -170],
     "sb-fanduel": [160, -175],
     "sb-betmgm": [140, -160],
@@ -66,6 +77,8 @@ const MONEYLINE_ODDS: Record<string, MoneylineBookOdds> = {
   },
   "evt-eagles-cowboys": {
     "sb-pinnacle": [-110, -108],
+    "sb-circa": [-108, -106],
+    "sb-betonline": [-112, -110],
     "sb-draftkings": [-105, -112],
     "sb-fanduel": [-112, -105],
     "sb-betmgm": [-108, -110],
@@ -73,13 +86,18 @@ const MONEYLINE_ODDS: Record<string, MoneylineBookOdds> = {
   },
   "evt-celtics-bucks": {
     "sb-pinnacle": [-175, 155],
+    "sb-circa": [-172, 152],
+    "sb-betonline": [-178, 158],
     "sb-draftkings": [-180, 150],
     "sb-fanduel": [-165, 160],
     "sb-betmgm": [-170, 145],
     "sb-caesars": [-185, 170],
   },
+  // Pinnacle intentionally has no quote here — demonstrates sharp-reference
+  // fallback to Circa (next sharpPriority) when Pinnacle hasn't posted a line.
   "evt-49ers-rams": {
-    "sb-pinnacle": [-220, 185],
+    "sb-circa": [-218, 183],
+    "sb-betonline": [-222, 187],
     "sb-draftkings": [-215, 175],
     "sb-fanduel": [-230, 195],
     "sb-betmgm": [-210, 180],
@@ -87,6 +105,8 @@ const MONEYLINE_ODDS: Record<string, MoneylineBookOdds> = {
   },
   "evt-nuggets-suns": {
     "sb-pinnacle": [-155, 135],
+    "sb-circa": [-152, 132],
+    "sb-betonline": [-158, 138],
     "sb-draftkings": [-160, 130],
     "sb-fanduel": [-150, 140],
     "sb-betmgm": [-158, 132],
@@ -106,6 +126,8 @@ const TOTAL_LINE_VALUE: Record<string, number> = {
 const TOTAL_ODDS: Record<string, TotalBookOdds> = {
   "evt-chiefs-bills": {
     "sb-pinnacle": [-108, -108],
+    "sb-circa": [-106, -106],
+    "sb-betonline": [-110, -110],
     "sb-draftkings": [-105, -110],
     "sb-fanduel": [-115, -102],
     "sb-betmgm": [-110, -108],
@@ -113,6 +135,8 @@ const TOTAL_ODDS: Record<string, TotalBookOdds> = {
   },
   "evt-lakers-warriors": {
     "sb-pinnacle": [-112, -105],
+    "sb-circa": [-110, -103],
+    "sb-betonline": [-114, -107],
     "sb-draftkings": [-108, -108],
     "sb-fanduel": [-118, -100],
     "sb-betmgm": [-110, -110],
@@ -120,6 +144,8 @@ const TOTAL_ODDS: Record<string, TotalBookOdds> = {
   },
   "evt-eagles-cowboys": {
     "sb-pinnacle": [-107, -110],
+    "sb-circa": [-105, -108],
+    "sb-betonline": [-109, -112],
     "sb-draftkings": [-110, -107],
     "sb-fanduel": [-100, -117],
     "sb-betmgm": [-112, -105],
@@ -127,6 +153,8 @@ const TOTAL_ODDS: Record<string, TotalBookOdds> = {
   },
   "evt-celtics-bucks": {
     "sb-pinnacle": [-110, -108],
+    "sb-circa": [-108, -106],
+    "sb-betonline": [-112, -110],
     "sb-draftkings": [-115, -102],
     "sb-fanduel": [-105, -112],
     "sb-betmgm": [-108, -110],
@@ -134,6 +162,8 @@ const TOTAL_ODDS: Record<string, TotalBookOdds> = {
   },
   "evt-49ers-rams": {
     "sb-pinnacle": [-105, -112],
+    "sb-circa": [-103, -110],
+    "sb-betonline": [-107, -114],
     "sb-draftkings": [-100, -116],
     "sb-fanduel": [-110, -108],
     "sb-betmgm": [-104, -113],
@@ -141,10 +171,33 @@ const TOTAL_ODDS: Record<string, TotalBookOdds> = {
   },
   "evt-nuggets-suns": {
     "sb-pinnacle": [-109, -109],
+    "sb-circa": [-107, -107],
+    "sb-betonline": [-111, -111],
     "sb-draftkings": [-112, -104],
     "sb-fanduel": [-102, -115],
     "sb-betmgm": [-107, -110],
     "sb-caesars": [-113, -101],
+  },
+};
+
+/**
+ * Alternate ("stale") total line held by a couple of books that haven't moved
+ * yet after the consensus total shifted — the classic setup for a middle: bet
+ * Over at the lower line on one book and Under at the higher line on another.
+ */
+const ALT_TOTAL_LINE_VALUE: Record<string, number> = {
+  "evt-chiefs-bills": 46,
+  "evt-lakers-warriors": 221.5,
+};
+
+const ALT_TOTAL_ODDS: Record<string, TotalBookOdds> = {
+  "evt-chiefs-bills": {
+    "sb-draftkings": [-108, -110],
+    "sb-betmgm": [-105, -112],
+  },
+  "evt-lakers-warriors": {
+    "sb-fanduel": [-110, -108],
+    "sb-caesars": [-107, -111],
   },
 };
 
@@ -183,6 +236,20 @@ function buildTotalMarket(seed: EventSeed, event: EventSummary): TwoWayMarket {
   };
 }
 
+/** The stale/alternate-line total market used to demonstrate middles (see ALT_TOTAL_LINE_VALUE). */
+function buildAltTotalMarket(seed: EventSeed, event: EventSummary): TwoWayMarket | null {
+  const line = ALT_TOTAL_LINE_VALUE[seed.id];
+  if (line === undefined) return null;
+  return {
+    id: `mkt-${seed.id}-total-alt`,
+    event,
+    marketType: "total",
+    lineValue: line,
+    sideALabel: `Over ${line}`,
+    sideBLabel: `Under ${line}`,
+  };
+}
+
 function buildMoneylineQuotes(seed: EventSeed, marketId: string): OddsQuote[] {
   const bookOdds = MONEYLINE_ODDS[seed.id];
   return Object.entries(bookOdds).map(([sportsbookId, [home, away]]) => ({
@@ -190,11 +257,10 @@ function buildMoneylineQuotes(seed: EventSeed, marketId: string): OddsQuote[] {
     sportsbookId,
     oddsDecimalA: americanToDecimal(home),
     oddsDecimalB: americanToDecimal(away),
-    // Pinnacle (the fair-odds reference) always reflects the freshest line.
-    timestamp:
-      sportsbookId === "sb-pinnacle"
-        ? new Date().toISOString()
-        : jitteredRecentTimestamp(),
+    // Sharp reference books (the fair-odds sources) always reflect the freshest line.
+    timestamp: SHARP_BOOK_IDS.has(sportsbookId)
+      ? new Date().toISOString()
+      : jitteredRecentTimestamp(),
   }));
 }
 
@@ -205,10 +271,21 @@ function buildTotalQuotes(seed: EventSeed, marketId: string): OddsQuote[] {
     sportsbookId,
     oddsDecimalA: americanToDecimal(over),
     oddsDecimalB: americanToDecimal(under),
-    timestamp:
-      sportsbookId === "sb-pinnacle"
-        ? new Date().toISOString()
-        : jitteredRecentTimestamp(),
+    timestamp: SHARP_BOOK_IDS.has(sportsbookId)
+      ? new Date().toISOString()
+      : jitteredRecentTimestamp(),
+  }));
+}
+
+function buildAltTotalQuotes(seed: EventSeed, marketId: string): OddsQuote[] {
+  const bookOdds = ALT_TOTAL_ODDS[seed.id];
+  if (!bookOdds) return [];
+  return Object.entries(bookOdds).map(([sportsbookId, [over, under]]) => ({
+    marketId,
+    sportsbookId,
+    oddsDecimalA: americanToDecimal(over),
+    oddsDecimalB: americanToDecimal(under),
+    timestamp: jitteredRecentTimestamp(),
   }));
 }
 
@@ -230,6 +307,12 @@ export function buildMockOddsProviderData(): OddsProviderData {
     const totalMarket = buildTotalMarket(seed, event);
     markets.push(totalMarket);
     quotes.push(...buildTotalQuotes(seed, totalMarket.id));
+
+    const altTotalMarket = buildAltTotalMarket(seed, event);
+    if (altTotalMarket) {
+      markets.push(altTotalMarket);
+      quotes.push(...buildAltTotalQuotes(seed, altTotalMarket.id));
+    }
   }
 
   return { sportsbooks: SPORTSBOOKS, events, markets, quotes };

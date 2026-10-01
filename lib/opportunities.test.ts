@@ -98,3 +98,92 @@ describe("buildBookComparisonRows", () => {
     expect(buildBookComparisonRows(buildFixture(), "nope")).toEqual([]);
   });
 });
+
+describe("sharp reference priority fallback", () => {
+  function buildMultiSharpFixture(pinnacleHasQuote: boolean): OddsProviderData {
+    const event = {
+      id: "evt-2",
+      sport: "Football",
+      league: "NFL",
+      homeTeam: "Home",
+      awayTeam: "Away",
+      startTime: new Date().toISOString(),
+      status: "upcoming" as const,
+    };
+    const market = {
+      id: "mkt-2",
+      event,
+      marketType: "moneyline" as const,
+      lineValue: null,
+      sideALabel: "Home ML",
+      sideBLabel: "Away ML",
+    };
+
+    const quotes = [
+      {
+        marketId: "mkt-2",
+        sportsbookId: "sb-circa",
+        // Deliberately a different line than Pinnacle's, so the two produce
+        // distinguishable fair-odds benchmarks for the fallback assertion below.
+        oddsDecimalA: americanToDecimal(-130),
+        oddsDecimalB: americanToDecimal(110),
+        timestamp: new Date().toISOString(),
+      },
+      {
+        marketId: "mkt-2",
+        sportsbookId: "sb-other",
+        oddsDecimalA: americanToDecimal(130),
+        oddsDecimalB: americanToDecimal(-200),
+        timestamp: new Date().toISOString(),
+      },
+    ];
+    if (pinnacleHasQuote) {
+      quotes.unshift({
+        marketId: "mkt-2",
+        sportsbookId: "sb-pinnacle",
+        oddsDecimalA: americanToDecimal(-110),
+        oddsDecimalB: americanToDecimal(-110),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return {
+      sportsbooks: [
+        { id: "sb-pinnacle", name: "Pinnacle", slug: "pinnacle", logoUrl: null, isSharpReference: true, sharpPriority: 0 },
+        { id: "sb-circa", name: "Circa Sports", slug: "circa", logoUrl: null, isSharpReference: true, sharpPriority: 1 },
+        { id: "sb-other", name: "OtherBook", slug: "other", logoUrl: null, isSharpReference: false },
+      ],
+      events: [event],
+      markets: [market],
+      quotes,
+    };
+  }
+
+  it("prefers Pinnacle (lower sharpPriority) over Circa, and falls back to Circa's distinct line when Pinnacle is absent", () => {
+    const withPinnacle = computeAllOpportunities(buildMultiSharpFixture(true));
+    const withoutPinnacle = computeAllOpportunities(buildMultiSharpFixture(false));
+
+    const sideAWithPinnacle = withPinnacle.find((o) => o.sportsbook.id === "sb-other" && o.side === "A")!;
+    const sideAWithCircaFallback = withoutPinnacle.find(
+      (o) => o.sportsbook.id === "sb-other" && o.side === "A"
+    )!;
+
+    // Pinnacle's -110/-110 line and Circa's -130/+110 line are deliberately
+    // different, so the resulting EV% must differ between the two scenarios —
+    // proving the fallback actually used Circa's own line, not Pinnacle's.
+    expect(sideAWithPinnacle.evPercent).not.toBeCloseTo(sideAWithCircaFallback.evPercent, 1);
+  });
+
+  it("falls back to Circa when Pinnacle has no quote for the market", () => {
+    const withPinnacle = computeAllOpportunities(buildMultiSharpFixture(true));
+    const withoutPinnacle = computeAllOpportunities(buildMultiSharpFixture(false));
+    // Without Pinnacle, Circa becomes the fair-odds source instead of the market being skipped entirely.
+    expect(withoutPinnacle.length).toBeGreaterThan(0);
+    expect(withPinnacle.length).toBe(withoutPinnacle.length);
+  });
+
+  it("never treats a sharp reference book itself as a bettable opportunity", () => {
+    const opportunities = computeAllOpportunities(buildMultiSharpFixture(true));
+    expect(opportunities.every((o) => o.sportsbook.id !== "sb-circa")).toBe(true);
+  });
+});

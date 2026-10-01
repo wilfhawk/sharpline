@@ -48,6 +48,10 @@ export function getOddsProvider(): OddsProvider {
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
+        sharpBookKeys: (process.env.ODDS_API_SHARP_BOOKS ?? "pinnacle")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
       });
     }
     default:

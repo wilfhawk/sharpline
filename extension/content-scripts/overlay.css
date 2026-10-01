@@ -1,0 +1,48 @@
+#sharpline-overlay {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 2147483647;
+  width: 240px;
+  border-radius: 10px;
+  background: #0b0f14;
+  color: #e6edf3;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.sharpline-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+}
+
+.sharpline-overlay-header button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.sharpline-overlay-body {
+  padding: 10px;
+}
+
+.sharpline-overlay-event {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.sharpline-overlay-side,
+.sharpline-overlay-odds {
+  margin: 0 0 2px;
+  color: #9fb0bf;
+}

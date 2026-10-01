@@ -26,7 +26,8 @@ interface BestPrice {
   oddsDecimal: number;
 }
 
-function findBestPrice(
+/** Finds the best (highest decimal) price among a set of book quotes for one side. Exported for reuse by middles.ts. */
+export function findBestPrice(
   quotes: { sportsbookId: string; oddsDecimal: number }[],
   sportsbookById: Map<string, Sportsbook>
 ): BestPrice | undefined {

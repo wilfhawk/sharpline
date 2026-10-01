@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "SharpLine Bet Helper",
+  "version": "0.1.0",
+  "description": "Keeps your SharpLine +EV bet (team, odds, suggested stake) visible as an overlay while you're on your sportsbook's site, so you don't have to tab-switch back and forth.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SharpLine Bet Helper"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://sharpline-nu.vercel.app/*",
+    "http://localhost:3000/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://sharpline-nu.vercel.app/*",
+        "http://localhost:3000/*"
+      ],
+      "js": ["content-scripts/sharpline-bridge.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.draftkings.com/*",
+        "https://*.fanduel.com/*",
+        "https://*.betmgm.com/*",
+        "https://*.caesars.com/*"
+      ],
+      "js": ["content-scripts/sportsbook-overlay.js"],
+      "css": ["content-scripts/overlay.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

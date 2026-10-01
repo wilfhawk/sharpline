@@ -184,4 +184,45 @@ describe("mapTheOddsApiEvents", () => {
     expect(allenQuote?.oddsDecimalA).toBeCloseTo(1.9);
     expect(allenQuote?.oddsDecimalB).toBeCloseTo(1.9);
   });
+
+  it("marks multiple sharp reference books with priority = index in sharpBookKeys", () => {
+    const eventWithCirca: RawOddsApiEvent = {
+      ...NFL_EVENT,
+      bookmakers: [
+        ...NFL_EVENT.bookmakers,
+        {
+          key: "circasports",
+          title: "Circa Sports",
+          last_update: "2099-01-01T17:00:00Z",
+          markets: [
+            {
+              key: "h2h",
+              outcomes: [
+                { name: "Buffalo Bills", price: 1.88 },
+                { name: "Kansas City Chiefs", price: 2.0 },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const data = mapTheOddsApiEvents([eventWithCirca], ["pinnacle", "circasports", "betonlineag"]);
+    const pinnacle = data.sportsbooks.find((s) => s.slug === "pinnacle")!;
+    const circa = data.sportsbooks.find((s) => s.slug === "circasports")!;
+    const draftkings = data.sportsbooks.find((s) => s.slug === "draftkings")!;
+
+    expect(pinnacle.isSharpReference).toBe(true);
+    expect(pinnacle.sharpPriority).toBe(0);
+    expect(circa.isSharpReference).toBe(true);
+    expect(circa.sharpPriority).toBe(1);
+    expect(draftkings.isSharpReference).toBe(false);
+    expect(draftkings.sharpPriority).toBeNull();
+  });
+
+  it("defaults to pinnacle-only as the sharp reference when sharpBookKeys is omitted", () => {
+    const data = mapTheOddsApiEvents([NFL_EVENT]);
+    const pinnacle = data.sportsbooks.find((s) => s.slug === "pinnacle")!;
+    expect(pinnacle.sharpPriority).toBe(0);
+  });
 });

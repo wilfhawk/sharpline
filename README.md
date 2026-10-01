@@ -2,7 +2,9 @@
 
 A live dashboard that helps sports bettors find positive expected value
 (+EV) betting opportunities by comparing U.S. sportsbook odds against a
-de-vigged Pinnacle "fair odds" benchmark.
+de-vigged sharp-book (Pinnacle, with Circa/BetOnline fallback) "fair odds"
+benchmark. Also finds cross-book arbitrage, middles, and estimates same-game
+parlay EV; tracks Kelly stake sizing, CLV, and live/in-play edges.
 
 ## Stack
 
@@ -35,6 +37,7 @@ data; `middleware.ts` skips the Supabase session check entirely):
 | `ODDS_PROVIDER` | Odds data source — `mock` (default) or `the-odds-api` (see below) |
 | `ODDS_API_KEY` / `ODDS_API_SPORTS` / `ODDS_API_REGIONS` / `ODDS_API_CACHE_SECONDS` | Live odds via [The Odds API](https://the-odds-api.com), only used when `ODDS_PROVIDER=the-odds-api` |
 | `ODDS_API_EXTRA_MARKETS` | Opt-in player-prop market keys added to the same bulk odds call (e.g. `player_pass_tds,player_points`); adds to per-refresh credit cost |
+| `ODDS_API_SHARP_BOOKS` | Priority-ordered sharp reference bookmaker keys (default `pinnacle`), e.g. `pinnacle,circasports,betonlineag` — the engine falls back to the next book in the list when a higher-priority one hasn't posted a line for a market |
 | `AGE_GATE_MINIMUM` | Minimum age enforced by the signup age-gate modal (default 21) |
 
 To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`
@@ -57,8 +60,16 @@ settings (see `app/api/auth/callback/route.ts`).
    each upstream request. The dashboard polls the app's own `/api/opportunities`
    every 20s regardless of provider, but that only re-hits The Odds API once
    the cache window expires.
-5. Markets with no Pinnacle quote at the same line are silently skipped (no
-   fair-odds benchmark to devig against) — this is expected, not a bug.
+5. Markets with no quote from any configured sharp reference book are
+   silently skipped (no fair-odds benchmark to devig against) — this is
+   expected, not a bug. Add more sharp books as a fallback chain via
+   `ODDS_API_SHARP_BOOKS` (e.g. `pinnacle,circasports,betonlineag`) so a
+   market missing Pinnacle can still be devigged against Circa or BetOnline.
+6. For broader book coverage, add the `us2` region (alongside `us`/`eu`) to
+   `ODDS_API_REGIONS` — it adds books like BetRivers, Circa, BetOnline, and
+   others not in the default `us` region. More regions/sports/markets cost
+   more credits per refresh (see the budget math below), so a bigger plan is
+   usually needed for full 20+ book coverage across many sports.
 
 **Free-tier budget (500 credits/month):** cost per refresh is
 `[sports] x [markets=3] x [regions]`. With the default 2 sports and 2 regions
@@ -105,6 +116,25 @@ are unit tested with ~99% coverage.
 - `app/api/stripe/` — checkout, billing portal, and webhook routes (test mode).
 - `middleware.ts` — Supabase session refresh + a no-op geofencing hook (see
   `COMPLIANCE.md`).
+- `lib/middles.ts` + `components/dashboard/MiddlesList.tsx` — finds a middle
+  when the same event's total is quoted at two different lines (bet Over the
+  lower line at one book, Under the higher line at another); profit isn't
+  guaranteed like arbitrage, only when the result lands in the window.
+- `lib/sgp.ts` + `components/dashboard/SgpBuilder.tsx` — same-game parlay EV
+  estimator. **v1 simplified heuristic**: assumes independence between legs
+  then scales by a user-supplied `correlationFactor`, since true
+  correlation/copula modeling needs a historical results dataset this app
+  doesn't have yet. Treat the output as a rough guide, not a precise edge.
+- `lib/live.ts` — live/in-play helpers; `useOpportunities` polls every 8s
+  (instead of 20s) whenever a live opportunity is present, since in-play
+  lines move fastest.
+- `extension/` — a minimal browser-extension scaffold (Manifest V3). **Scope
+  cut**: it's a clipboard "copy formatted bet" bridge, not real per-sportsbook
+  bet-slip auto-fill — every book's bet-slip DOM is different and changes
+  often, so guessing selectors would be fragile and likely wrong. See
+  `extension/README.md` for what it does today and how to extend it.
+- `app/learn/` — educational content (Kelly Criterion, CLV, de-vigging,
+  arbitrage, middles, parlay EV) for content marketing / user education.
 
 ## Known limitations (as of this build)
 

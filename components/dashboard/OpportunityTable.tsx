@@ -116,7 +116,7 @@ export function OpportunityTable({
                     {formatAmericanOdds(o.oddsDecimal)}
                   </TableCell>
                   <TableCell className="tabular-nums whitespace-nowrap">
-                    {formatTimeToStart(o.event.startTime)}
+                    <LiveOrTimeToStart status={o.event.status} startTime={o.event.startTime} />
                   </TableCell>
                   <TableCell className="capitalize">{o.market.marketType}</TableCell>
                   <TableCell>{o.sportsbook.name}</TableCell>
@@ -146,5 +146,24 @@ function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
     <ChevronUp className="size-3" />
   ) : (
     <ChevronDown className="size-3" />
+  );
+}
+
+export function LiveOrTimeToStart({
+  status,
+  startTime,
+}: {
+  status: EvOpportunity["event"]["status"];
+  startTime: string;
+}) {
+  if (status !== "live") return <>{formatTimeToStart(startTime)}</>;
+  return (
+    <span className="inline-flex items-center gap-1.5 font-medium text-red-400">
+      <span className="relative flex size-1.5">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-75" />
+        <span className="relative inline-flex size-1.5 rounded-full bg-red-400" />
+      </span>
+      LIVE
+    </span>
   );
 }

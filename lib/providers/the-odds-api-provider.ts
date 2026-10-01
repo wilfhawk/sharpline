@@ -33,7 +33,7 @@ export interface RawOddsApiEvent {
   bookmakers: RawOddsApiBookmaker[];
 }
 
-/** The Odds API bookmaker key used as Pinnacle's sharp reference (available in the "eu" region). */
+/** The Odds API bookmaker key used as Pinnacle's sharp reference (available in the "eu" region) — overridable via sharpBookKeys below for multi-sharp-book fallback. */
 const SHARP_REFERENCE_KEY = "pinnacle";
 
 /** Broad sport-family label derived from the sport_key prefix (e.g. "americanfootball_nfl" -> "Football"). */
@@ -195,9 +195,16 @@ function buildPlayerPropMarkets(
 
 /**
  * Maps raw The Odds API events into this app's OddsProviderData shape.
+ * `sharpBookKeys` is a priority-ordered list of bookmaker keys to treat as
+ * sharp reference books (index = priority, e.g. ["pinnacle","circasports",
+ * "betonlineag"] falls back to Circa then BetOnline when Pinnacle hasn't
+ * posted a line). Defaults to Pinnacle only for backward compatibility.
  * Pure/hermetic: no network calls, safe to unit test with fixture data.
  */
-export function mapTheOddsApiEvents(rawEvents: RawOddsApiEvent[]): OddsProviderData {
+export function mapTheOddsApiEvents(
+  rawEvents: RawOddsApiEvent[],
+  sharpBookKeys: string[] = [SHARP_REFERENCE_KEY]
+): OddsProviderData {
   const sportsbookByKey = new Map<string, Sportsbook>();
   const events: EventSummary[] = [];
   const marketByLineKey = new Map<string, TwoWayMarket>();
@@ -209,12 +216,14 @@ export function mapTheOddsApiEvents(rawEvents: RawOddsApiEvent[]): OddsProviderD
 
     for (const bookmaker of rawEvent.bookmakers) {
       if (!sportsbookByKey.has(bookmaker.key)) {
+        const sharpPriority = sharpBookKeys.indexOf(bookmaker.key);
         sportsbookByKey.set(bookmaker.key, {
           id: bookmaker.key,
           name: bookmaker.title,
           slug: bookmaker.key,
           logoUrl: null,
-          isSharpReference: bookmaker.key === SHARP_REFERENCE_KEY,
+          isSharpReference: sharpPriority !== -1,
+          sharpPriority: sharpPriority !== -1 ? sharpPriority : null,
         });
       }
 
@@ -270,6 +279,8 @@ export interface TheOddsApiConfig {
   cacheSeconds: number;
   /** Opt-in player-prop market keys (e.g. "player_points") added to the same bulk /odds call. Each adds to the per-refresh credit cost (markets x regions) — off by default. */
   extraMarkets: string[];
+  /** Priority-ordered bookmaker keys treated as sharp reference books (index = priority). Defaults to ["pinnacle"]. */
+  sharpBookKeys: string[];
 }
 
 /** Real odds provider backed by The Odds API (https://the-odds-api.com). */
@@ -283,7 +294,7 @@ export class TheOddsApiProvider implements OddsProvider {
     const perSport = await Promise.all(
       this.config.sportKeys.map((sportKey) => this.fetchSportEvents(sportKey))
     );
-    return mapTheOddsApiEvents(perSport.flat());
+    return mapTheOddsApiEvents(perSport.flat(), this.config.sharpBookKeys);
   }
 
   private async fetchSportEvents(sportKey: string): Promise<RawOddsApiEvent[]> {

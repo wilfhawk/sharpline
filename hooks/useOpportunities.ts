@@ -2,12 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { EvOpportunity } from "@/lib/types";
+import { hasLiveOpportunities } from "@/lib/live";
 
 export interface OpportunityFilters {
   sport?: string;
   sportsbookSlug?: string;
   marketType?: string;
   minEv?: number;
+  liveOnly?: boolean;
 }
 
 interface OpportunitiesResponse {
@@ -21,6 +23,8 @@ interface OpportunitiesResponse {
 }
 
 const POLL_INTERVAL_MS = 20_000;
+/** Faster poll cadence when live/in-play events are present — lines move fastest once a game starts. */
+const LIVE_POLL_INTERVAL_MS = 8_000;
 
 function buildQueryString(filters: OpportunityFilters): string {
   const params = new URLSearchParams();
@@ -28,6 +32,7 @@ function buildQueryString(filters: OpportunityFilters): string {
   if (filters.sportsbookSlug) params.set("sportsbook", filters.sportsbookSlug);
   if (filters.marketType) params.set("marketType", filters.marketType);
   if (filters.minEv !== undefined) params.set("minEv", String(filters.minEv));
+  if (filters.liveOnly) params.set("liveOnly", "true");
   return params.toString();
 }
 
@@ -42,11 +47,18 @@ async function fetchOpportunities(
   return res.json();
 }
 
-/** Polls the +EV opportunities feed every 20s, re-fetching whenever filters change. */
+/**
+ * Polls the +EV opportunities feed every 20s (8s whenever a live/in-play
+ * opportunity is present, since in-play lines move fastest), re-fetching
+ * whenever filters change.
+ */
 export function useOpportunities(filters: OpportunityFilters = {}) {
   return useQuery({
     queryKey: ["opportunities", filters],
     queryFn: () => fetchOpportunities(filters),
-    refetchInterval: POLL_INTERVAL_MS,
+    refetchInterval: (query) => {
+      const opportunities = query.state.data?.opportunities ?? [];
+      return hasLiveOpportunities(opportunities) ? LIVE_POLL_INTERVAL_MS : POLL_INTERVAL_MS;
+    },
   });
 }
