@@ -3,8 +3,10 @@ import type Stripe from "stripe";
 import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getTierForPriceId } from "@/lib/stripe-prices";
+import type { SubscriptionTier } from "@/lib/types";
 
-async function setTierByCustomerId(customerId: string, tier: "free" | "pro") {
+async function setTierByCustomerId(customerId: string, tier: SubscriptionTier) {
   const admin = createAdminClient();
   await admin
     .from("users")
@@ -36,20 +38,30 @@ export async function POST(request: NextRequest) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
-      if (typeof session.customer === "string") {
-        await setTierByCustomerId(session.customer, "pro");
-      }
+      if (typeof session.customer !== "string") break;
+
+      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ["line_items"],
+      });
+      const priceId = fullSession.line_items?.data[0]?.price?.id;
+      const resolved = priceId ? getTierForPriceId(priceId) : null;
+      // Defaults to "pro" if the price isn't recognized (shouldn't happen for
+      // sessions created by our own checkout route) rather than silently no-op.
+      await setTierByCustomerId(session.customer, resolved?.tier ?? "pro");
       break;
     }
     case "customer.subscription.updated": {
       const subscription = event.data.object as Stripe.Subscription;
       const isActive = ["active", "trialing"].includes(subscription.status);
-      if (typeof subscription.customer === "string") {
-        await setTierByCustomerId(
-          subscription.customer,
-          isActive ? "pro" : "free"
-        );
+      if (typeof subscription.customer !== "string") break;
+
+      if (!isActive) {
+        await setTierByCustomerId(subscription.customer, "free");
+        break;
       }
+      const priceId = subscription.items.data[0]?.price?.id;
+      const resolved = priceId ? getTierForPriceId(priceId) : null;
+      await setTierByCustomerId(subscription.customer, resolved?.tier ?? "pro");
       break;
     }
     case "customer.subscription.deleted": {

@@ -1,3 +1,4 @@
+import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { SubscriptionTier } from "@/lib/types";
@@ -26,5 +27,22 @@ export async function getRequestTier(): Promise<SubscriptionTier> {
     .eq("id", user.id)
     .single();
 
-  return profile?.subscription_tier === "pro" ? "pro" : "free";
+  const dbTier = profile?.subscription_tier;
+  return dbTier === "pro" || dbTier === "plus" ? dbTier : "free";
+}
+
+const VALID_TIERS: SubscriptionTier[] = ["free", "plus", "pro"];
+
+/**
+ * Same as getRequestTier(), but honors the public "preview as Free/Plus/Pro"
+ * toggle (see hooks/useTierPreview.ts) via an explicit `?tier=` query param
+ * when present — an intentional, visible, no-login demo control, not a real
+ * entitlement check. Used by every tier-gated API route for consistency.
+ */
+export async function getRequestTierWithOverride(request: NextRequest): Promise<SubscriptionTier> {
+  const override = request.nextUrl.searchParams.get("tier");
+  if (override && (VALID_TIERS as string[]).includes(override)) {
+    return override as SubscriptionTier;
+  }
+  return getRequestTier();
 }

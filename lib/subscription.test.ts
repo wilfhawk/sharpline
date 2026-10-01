@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyTierGating, getTierLimits } from "./subscription";
+import { applyTierGating, canReceiveAlerts, getTierLimits, hasProFeatures } from "./subscription";
 import type { EvOpportunity } from "./types";
 
 function makeOpportunity(
@@ -58,6 +58,29 @@ describe("getTierLimits", () => {
       dataDelayMinutes: 0,
       maxOpportunitiesPerDay: null,
     });
+  });
+
+  it("gives plus tier no delay and no cap, same as pro, for +EV data", () => {
+    expect(getTierLimits("plus")).toEqual({
+      dataDelayMinutes: 0,
+      maxOpportunitiesPerDay: null,
+    });
+  });
+});
+
+describe("hasProFeatures", () => {
+  it("is true only for pro", () => {
+    expect(hasProFeatures("free")).toBe(false);
+    expect(hasProFeatures("plus")).toBe(false);
+    expect(hasProFeatures("pro")).toBe(true);
+  });
+});
+
+describe("canReceiveAlerts", () => {
+  it("is true for plus and pro, false for free", () => {
+    expect(canReceiveAlerts("free")).toBe(false);
+    expect(canReceiveAlerts("plus")).toBe(true);
+    expect(canReceiveAlerts("pro")).toBe(true);
   });
 });
 

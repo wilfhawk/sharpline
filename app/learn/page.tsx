@@ -43,7 +43,8 @@ const TOPICS = [
   {
     icon: Shuffle,
     title: "Same-game parlay (SGP) EV — simplified",
-    body: "Parlaying correlated legs from the same game (e.g. \"Team A wins\" + \"Team A -3.5\") means their true joint probability is higher than if you just multiplied the individual probabilities together, since a win in one often implies the other. SharpLine's Parlay Builder lets you apply a manual correlation adjustment to approximate this — it's a rough estimate, not true correlation modeling, which would require a historical results dataset.",
+    id: "sgp-ev",
+    body: "Parlaying correlated legs from the same game (e.g. \"Team A wins\" + \"Team A -3.5\") means their true joint probability is higher than if you just multiplied the individual probabilities together, since a win in one often implies the other. SharpLine's Parlay Builder lets you apply a manual correlation adjustment to approximate this — it's a rough estimate, not true correlation modeling, which would require a historical results dataset. In practice: the displayed EV% can be meaningfully wrong in either direction (overstating OR understating your real edge) depending on how well your correlation factor guess matches the legs' true relationship, so treat it as a directional guide for comparing parlays against each other, not a number to size real stakes against the way you would a single-game +EV bet.",
   },
 ];
 
@@ -66,8 +67,8 @@ export default function LearnPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {TOPICS.map(({ icon: Icon, title, body }) => (
-          <Card key={title} className="gap-2 p-5">
+        {TOPICS.map(({ icon: Icon, title, body, id }) => (
+          <Card key={title} id={id} className="gap-2 scroll-mt-20 p-5">
             <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Icon className="size-5" />
             </span>

@@ -4,10 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmericanOdds, formatTimeToStart } from "@/lib/display";
 import { useMiddles } from "@/hooks/useMiddles";
+import { ProFeatureUpsell } from "./ProFeatureUpsell";
 
 export function MiddlesList() {
   const { data, isLoading, isError } = useMiddles();
   const opportunities = data?.opportunities ?? [];
+
+  if (data?.meta.gated) {
+    return <ProFeatureUpsell feature="Middles detection" />;
+  }
 
   if (isLoading) {
     return (

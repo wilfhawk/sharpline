@@ -1,6 +1,6 @@
 export type MarketType = "moneyline" | "spread" | "total" | "player_prop";
 export type EventStatus = "upcoming" | "live" | "final";
-export type SubscriptionTier = "free" | "pro";
+export type SubscriptionTier = "free" | "plus" | "pro";
 export type DevigMethod = "multiplicative" | "power";
 
 export interface Sportsbook {

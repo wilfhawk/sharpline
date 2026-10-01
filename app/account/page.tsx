@@ -40,7 +40,7 @@ export default async function AccountPage() {
       <AppHeader />
       <AccountView
         email={user.email ?? ""}
-        tier={(profile?.subscription_tier as "free" | "pro") ?? "free"}
+        tier={(profile?.subscription_tier as "free" | "plus" | "pro") ?? "free"}
       />
     </>
   );

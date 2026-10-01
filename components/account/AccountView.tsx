@@ -6,6 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { SubscriptionTier } from "@/lib/types";
 
+const TIER_LABEL: Record<SubscriptionTier, string> = {
+  free: "Free",
+  plus: "Plus",
+  pro: "Pro",
+};
+
+const TIER_DESCRIPTION: Record<SubscriptionTier, string> = {
+  free: "15-minute delayed data, up to 3 +EV opportunities shown per day.",
+  plus: "Real-time odds, unlimited +EV opportunities and alerts. No arbitrage, middles, or parlay EV.",
+  pro: "Everything in Plus, plus arbitrage, middles, and same-game parlay EV.",
+};
+
 export function AccountView({
   email,
   tier,
@@ -15,11 +27,16 @@ export function AccountView({
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [interval, setInterval] = useState<"month" | "year">("month");
 
-  async function goToCheckout() {
+  async function goToCheckout(targetTier: "plus" | "pro") {
     setIsLoading(true);
     setError(null);
-    const res = await fetch("/api/stripe/checkout", { method: "POST" });
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tier: targetTier, interval }),
+    });
     const body = await res.json();
     if (!res.ok) {
       setError(body.error ?? "Something went wrong.");
@@ -52,35 +69,52 @@ export function AccountView({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Current plan</CardTitle>
-          <Badge variant={tier === "pro" ? "default" : "outline"}>
-            {tier === "pro" ? "Pro" : "Free"}
-          </Badge>
+          <Badge variant={tier === "free" ? "outline" : "default"}>{TIER_LABEL[tier]}</Badge>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {tier === "free" ? (
+          <p className="text-sm text-muted-foreground">{TIER_DESCRIPTION[tier]}</p>
+
+          {tier !== "pro" && (
             <>
-              <p className="text-sm text-muted-foreground">
-                Free plan: 15-minute delayed data, up to 3 +EV opportunities
-                shown per day.
-              </p>
-              <Button onClick={goToCheckout} disabled={isLoading} className="w-fit">
-                Upgrade to Pro
-              </Button>
+              <div className="inline-flex w-fit items-center rounded-full border border-border/60 bg-muted/30 p-0.5 text-xs">
+                {(["month", "year"] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setInterval(option)}
+                    className={
+                      interval === option
+                        ? "rounded-full bg-foreground px-2.5 py-1 font-medium text-background"
+                        : "rounded-full px-2.5 py-1 text-muted-foreground hover:text-foreground"
+                    }
+                  >
+                    {option === "year" ? "Annual (2 months free)" : "Monthly"}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {tier === "free" && (
+                  <Button onClick={() => goToCheckout("plus")} disabled={isLoading} className="w-fit">
+                    Upgrade to Plus
+                  </Button>
+                )}
+                <Button
+                  onClick={() => goToCheckout("pro")}
+                  disabled={isLoading}
+                  variant={tier === "free" ? "outline" : "default"}
+                  className="w-fit"
+                >
+                  Upgrade to Pro
+                </Button>
+              </div>
             </>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Pro plan: full live feed, unlimited +EV opportunities.
-              </p>
-              <Button
-                variant="outline"
-                onClick={goToPortal}
-                disabled={isLoading}
-                className="w-fit"
-              >
-                Manage billing
-              </Button>
-            </>
+          )}
+
+          {tier !== "free" && (
+            <Button variant="outline" onClick={goToPortal} disabled={isLoading} className="w-fit">
+              Manage billing
+            </Button>
           )}
           {error && <p className="text-xs text-destructive">{error}</p>}
         </CardContent>
@@ -92,7 +126,9 @@ export function AccountView({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Email/SMS alerts for new +EV opportunities are coming soon.
+            {tier === "free"
+              ? "Email alerts for your saved filters are available on Plus and Pro."
+              : "Manage which saved filters trigger an email alert from the Dashboard's Alert settings panel."}
           </p>
         </CardContent>
       </Card>

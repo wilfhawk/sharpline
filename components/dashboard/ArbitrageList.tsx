@@ -4,10 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmericanOdds, formatTimeToStart } from "@/lib/display";
 import { useArbitrage } from "@/hooks/useArbitrage";
+import { ProFeatureUpsell } from "./ProFeatureUpsell";
 
 export function ArbitrageList() {
   const { data, isLoading, isError } = useArbitrage();
   const opportunities = data?.opportunities ?? [];
+
+  if (data?.meta.gated) {
+    return <ProFeatureUpsell feature="Arbitrage detection" />;
+  }
 
   if (isLoading) {
     return (

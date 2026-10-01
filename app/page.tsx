@@ -5,9 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/layout/Logo";
 import { ComparisonTable } from "@/components/marketing/ComparisonTable";
 import { RoiCalculator } from "@/components/marketing/RoiCalculator";
+import { PricingSection } from "@/components/marketing/PricingSection";
 import {
   ArrowRight,
-  Check,
   Clock,
   LineChart,
   Radar,
@@ -40,37 +40,6 @@ const FEATURES = [
     title: "Ranked by real edge",
     description:
       "Every price is scored against fair odds and sorted by EV%, so the best opportunities always float to the top.",
-  },
-];
-
-const PRICING = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "/mo",
-    features: [
-      "15-minute delayed odds data",
-      "Up to 3 +EV opportunities per day",
-      "Moneyline, spread & total markets",
-    ],
-    cta: "Get started",
-    href: "/signup",
-    highlighted: false,
-  },
-  {
-    name: "Pro",
-    price: "$49",
-    period: "/mo",
-    features: [
-      "Live, real-time odds feed",
-      "Unlimited +EV opportunities",
-      "Line movement history",
-      "Arbitrage, middles & same-game parlay EV",
-      "Real-time opportunity alerts",
-    ],
-    cta: "Start Pro",
-    href: "/signup",
-    highlighted: true,
   },
 ];
 
@@ -240,41 +209,7 @@ export default function LandingPage() {
             Start free. Upgrade when you want the full live feed.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {PRICING.map((tier) => (
-            <Card
-              key={tier.name}
-              className={`gap-4 p-6 ${tier.highlighted ? "ring-2 ring-primary" : ""}`}
-            >
-              <div className="flex items-baseline justify-between">
-                <h3 className="text-lg font-semibold">{tier.name}</h3>
-                {tier.highlighted && <Badge>Most popular</Badge>}
-              </div>
-              <p>
-                <span className="text-3xl font-semibold">{tier.price}</span>
-                <span className="text-muted-foreground">{tier.period}</span>
-              </p>
-              <ul className="flex flex-col gap-2.5 text-sm text-muted-foreground">
-                {tier.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                      <Check className="size-2.5" />
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                className="mt-2 w-full"
-                variant={tier.highlighted ? "default" : "outline"}
-                nativeButton={false}
-                render={<Link href={tier.href} />}
-              >
-                {tier.cta}
-              </Button>
-            </Card>
-          ))}
-        </div>
+        <PricingSection />
       </section>
 
       <section className="border-t border-border/60 bg-muted/10">

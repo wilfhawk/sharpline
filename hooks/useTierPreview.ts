@@ -12,13 +12,13 @@ type TierPreview = SubscriptionTier | null;
 function readStoredTier(): TierPreview {
   if (typeof window === "undefined") return null;
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "free" || stored === "pro" ? stored : null;
+  return stored === "free" || stored === "plus" || stored === "pro" ? stored : null;
 }
 
 /**
- * Public, no-login "preview as Free / Pro" toggle (device-local, not a real
- * entitlement) so anyone — including the owner showing friends the tool —
- * can see either tier's experience without signing in or needing a Stripe
+ * Public, no-login "preview as Free / Plus / Pro" toggle (device-local, not a
+ * real entitlement) so anyone — including the owner showing friends the tool —
+ * can see any tier's experience without signing in or needing a Stripe
  * subscription. Synced across components in the same tab via a custom event,
  * same pattern as useBankroll/useAlertSettings.
  */

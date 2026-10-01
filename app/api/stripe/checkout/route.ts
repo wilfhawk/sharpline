@@ -3,12 +3,25 @@ import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getPriceId, type BillingInterval, type PaidTier } from "@/lib/stripe-prices";
 
-/** Creates a Stripe Checkout session for the Pro plan (test mode) for the signed-in user. */
+/** Creates a Stripe Checkout session for the chosen paid tier/interval (test mode) for the signed-in user. */
 export async function POST(request: NextRequest) {
   if (!isStripeConfigured() || !isSupabaseConfigured()) {
     return NextResponse.json(
       { error: "Billing is not configured yet." },
+      { status: 501 }
+    );
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const tier: PaidTier = body.tier === "plus" ? "plus" : "pro";
+  const interval: BillingInterval = body.interval === "year" ? "year" : "month";
+
+  const priceId = getPriceId(tier, interval);
+  if (!priceId) {
+    return NextResponse.json(
+      { error: `No Stripe price configured for ${tier}/${interval} yet.` },
       { status: 501 }
     );
   }
@@ -45,7 +58,6 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id);
   }
 
-  const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO;
   const origin = request.nextUrl.origin;
 
   const session = await stripe.checkout.sessions.create({

@@ -14,6 +14,7 @@ import { MiddlesList } from "./MiddlesList";
 import { SgpBuilder } from "./SgpBuilder";
 import { SavedFilters } from "./SavedFilters";
 import { AlertSettings } from "./AlertSettings";
+import { ProFeatureUpsell } from "./ProFeatureUpsell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -124,7 +125,11 @@ export function Dashboard() {
         </TabsContent>
 
         <TabsContent value="parlays">
-          <SgpBuilder opportunities={opportunities} />
+          {data?.meta.tier === "pro" ? (
+            <SgpBuilder opportunities={opportunities} />
+          ) : (
+            <ProFeatureUpsell feature="The Parlay Builder (SGP EV)" />
+          )}
         </TabsContent>
       </Tabs>
     </div>

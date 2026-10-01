@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { computeSgpEv } from "@/lib/sgp";
 import { evColorClasses, formatAmericanOdds, formatEvPercent } from "@/lib/display";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { EvOpportunity } from "@/lib/types";
 
 /**
@@ -156,7 +157,14 @@ export function SgpBuilder({ opportunities }: { opportunities: EvOpportunity[] }
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Estimated parlay EV</span>
+            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              Estimated parlay EV
+              <InfoTooltip>
+                Estimate only, based on a manual correlation-factor heuristic
+                — NOT true joint/copula modeling. May overstate or understate
+                real EV. See /learn for details.
+              </InfoTooltip>
+            </span>
             <span className={`rounded px-1.5 py-0.5 font-medium tabular-nums ${evColorClasses(result.evPercent)}`}>
               {formatEvPercent(result.evPercent)}
             </span>
@@ -166,7 +174,11 @@ export function SgpBuilder({ opportunities }: { opportunities: EvOpportunity[] }
             {(result.independenceFairProbability * 100).toFixed(1)}%) scaled by your
             correlation factor to {(result.adjustedFairProbability * 100).toFixed(1)}%
             — not true copula/correlation modeling. Treat as a rough guide, not a
-            precise edge.
+            precise edge.{" "}
+            <a href="/learn#sgp-ev" className="underline underline-offset-2">
+              Learn more
+            </a>
+            .
           </p>
         </Card>
       )}
