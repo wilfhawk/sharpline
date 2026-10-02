@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Fragment } from "react";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, ChevronsUpDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -18,6 +18,7 @@ import {
   formatTimeToStart,
 } from "@/lib/display";
 import type { EvOpportunity } from "@/lib/types";
+import { groupOpportunitiesByEvent } from "@/lib/opportunity-groups";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
@@ -55,7 +56,8 @@ export function OpportunityTable({
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("evPercent");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [expandedOpportunityId, setExpandedOpportunityId] = useState<string | null>(null);
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
@@ -66,9 +68,9 @@ export function OpportunityTable({
     }
   }
 
-  const sorted = [...opportunities].sort((a, b) => {
-    const av = sortValue(a, sortKey);
-    const bv = sortValue(b, sortKey);
+  const sortedGroups = groupOpportunitiesByEvent(opportunities).sort((a, b) => {
+    const av = sortValue(a.bestOpportunity, sortKey);
+    const bv = sortValue(b.bestOpportunity, sortKey);
     const cmp = av < bv ? -1 : av > bv ? 1 : 0;
     return sortDir === "asc" ? cmp : -cmp;
   });
@@ -107,19 +109,23 @@ export function OpportunityTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((o) => {
-            const isExpanded = expandedId === o.id;
+          {sortedGroups.map((group) => {
+            const o = group.bestOpportunity;
+            const isExpanded = expandedEventId === group.eventId;
             return (
-              <Fragment key={o.id}>
+              <Fragment key={group.eventId}>
                 <TableRow
                   className="cursor-pointer"
                   aria-expanded={isExpanded}
-                  onClick={() => setExpandedId(isExpanded ? null : o.id)}
+                  onClick={() => {
+                    setExpandedEventId(isExpanded ? null : group.eventId);
+                    setExpandedOpportunityId(null);
+                  }}
                 >
                   <TableCell className="max-w-56 truncate font-medium">
                     {o.event.awayTeam} @ {o.event.homeTeam}
                     <div className="text-xs text-muted-foreground">
-                      {o.sideLabel}
+                      Best EV · {group.opportunities.length} {group.opportunities.length === 1 ? "offer" : "offers"}
                     </div>
                   </TableCell>
                   <TableCell className="tabular-nums">
@@ -144,7 +150,46 @@ export function OpportunityTable({
                 {isExpanded && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={7} className="p-0">
-                      <ExpandedRowDetail opportunity={o} />
+                      <div className="divide-y divide-border/60 bg-muted/20">
+                        {group.opportunities.map((offer) => {
+                          const offerExpanded = expandedOpportunityId === offer.id;
+                          return (
+                            <div key={offer.id}>
+                              <button
+                                type="button"
+                                aria-expanded={offerExpanded}
+                                onClick={() =>
+                                  setExpandedOpportunityId(
+                                    offerExpanded ? null : offer.id
+                                  )
+                                }
+                                className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left text-sm hover:bg-muted/30"
+                              >
+                                <span className="min-w-0">
+                                  <span className="font-medium">{offer.sideLabel}</span>
+                                  <span className="text-muted-foreground">
+                                    {` · ${offer.market.marketType} · ${offer.sportsbook.name}`}
+                                  </span>
+                                </span>
+                                <span className="flex items-center gap-3 tabular-nums">
+                                  <span>{formatAmericanOdds(offer.oddsDecimal)}</span>
+                                  <span className={`rounded px-1.5 py-0.5 ${evColorClasses(offer.evPercent)}`}>
+                                    {formatEvPercent(offer.evPercent)}
+                                  </span>
+                                  {offerExpanded ? (
+                                    <ChevronDown className="size-4" />
+                                  ) : (
+                                    <ChevronRight className="size-4" />
+                                  )}
+                                </span>
+                              </button>
+                              {offerExpanded && (
+                                <ExpandedRowDetail opportunity={offer} />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Lock } from "lucide-react";
 
 export function ProFeatureUpsell({ feature }: { feature: string }) {
@@ -9,12 +8,9 @@ export function ProFeatureUpsell({ feature }: { feature: string }) {
         <span className="font-medium text-foreground">{feature}</span> is a Pro
         feature.
       </p>
-      <Link
-        href="/account"
-        className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
-      >
-        Upgrade to Pro
-      </Link>
+      <p className="text-xs text-muted-foreground">
+        Select Pro in the header to preview it.
+      </p>
     </div>
   );
 }

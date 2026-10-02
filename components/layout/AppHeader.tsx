@@ -3,10 +3,10 @@ import { Logo } from "./Logo";
 import { TierToggle } from "./TierToggle";
 
 const NAV_LINKS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/bets", label: "My Bets" },
-  { href: "/learn", label: "Learn" },
-  { href: "/account", label: "Account" },
+  { href: "/dashboard", label: "Dashboard", className: "" },
+  { href: "/learn", label: "Learn", className: "hidden sm:inline" },
+  { href: "/methodology", label: "Methodology", className: "hidden lg:inline" },
+  { href: "/status", label: "Status", className: "hidden xl:inline" },
 ];
 
 export function AppHeader() {
@@ -24,7 +24,7 @@ export function AppHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-muted-foreground hover:text-foreground"
+              className={`text-muted-foreground hover:text-foreground ${link.className}`}
             >
               {link.label}
             </Link>

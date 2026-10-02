@@ -12,17 +12,21 @@ import { StatsRow } from "./StatsRow";
 import { ArbitrageList } from "./ArbitrageList";
 import { MiddlesList } from "./MiddlesList";
 import { SgpBuilder } from "./SgpBuilder";
-import { SavedFilters } from "./SavedFilters";
 import { AlertSettings } from "./AlertSettings";
 import { ProFeatureUpsell } from "./ProFeatureUpsell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { groupOpportunitiesByEvent } from "@/lib/opportunity-groups";
 
 export function Dashboard() {
   const [filters, setFilters] = useState<OpportunityFilters>({ minEv: 2 });
   const { data, isLoading, isError } = useOpportunities(filters);
 
   const opportunities = data?.opportunities ?? [];
+  const eventGroups = useMemo(
+    () => groupOpportunitiesByEvent(opportunities),
+    [opportunities]
+  );
 
   useOpportunityAlerts(opportunities);
 
@@ -77,8 +81,6 @@ export function Dashboard() {
             onChange={setFilters}
           />
 
-          <SavedFilters currentFilters={filters} onApply={setFilters} />
-
           <AlertSettings />
 
           {isLoading && (
@@ -104,12 +106,15 @@ export function Dashboard() {
 
           {!isLoading && !isError && opportunities.length > 0 && (
             <>
+              <p className="text-xs text-muted-foreground">
+                {eventGroups.length} games across {opportunities.length} offers
+              </p>
               <div className="hidden md:block">
                 <OpportunityTable opportunities={opportunities} />
               </div>
               <div className="grid gap-3 md:hidden">
-                {opportunities.map((o) => (
-                  <OpportunityCard key={o.id} opportunity={o} />
+                {eventGroups.map((group) => (
+                  <OpportunityCard key={group.eventId} group={group} />
                 ))}
               </div>
             </>

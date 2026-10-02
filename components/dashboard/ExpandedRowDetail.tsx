@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { LineMovementChart } from "./LineMovementChart";
 import { StakeSizer } from "./StakeSizer";
-import { LogBetButton } from "./LogBetButton";
 import { CopyBetButton } from "./CopyBetButton";
 import { ShowMathButton } from "./ShowMathButton";
 import type { EvOpportunity } from "@/lib/types";
@@ -51,7 +50,6 @@ export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity 
       <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:items-start">
         <StakeSizer opportunity={opportunity} />
         <div className="flex gap-2">
-          <LogBetButton opportunity={opportunity} />
           <CopyBetButton opportunity={opportunity} />
           <ShowMathButton opportunity={opportunity} />
         </div>

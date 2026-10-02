@@ -62,14 +62,8 @@ export default function LandingPage() {
             >
               Learn
             </Link>
-            <Link
-              href="/login"
-              className="hidden text-muted-foreground hover:text-foreground sm:inline"
-            >
-              Log in
-            </Link>
-            <Button size="sm" nativeButton={false} render={<Link href="/signup" />}>
-              Sign up
+            <Button size="sm" nativeButton={false} render={<Link href="/dashboard" />}>
+              View dashboard
             </Button>
           </nav>
         </div>
@@ -97,19 +91,19 @@ export default function LandingPage() {
             <Button
               size="lg"
               nativeButton={false}
-              render={<Link href="/signup" />}
+              render={<Link href="/dashboard" />}
               className="gap-1.5"
             >
-              Start free
+              View live dashboard
               <ArrowRight className="size-4" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               nativeButton={false}
-              render={<Link href="/login" />}
+              render={<Link href="/learn" />}
             >
-              Log in
+              How it works
             </Button>
           </div>
         </div>
@@ -165,7 +159,7 @@ export default function LandingPage() {
           </div>
         </Card>
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          Sample preview — sign up to see your own live dashboard.
+          Sample preview — the dashboard is open to view without an account.
         </p>
       </section>
 
@@ -232,8 +226,8 @@ export default function LandingPage() {
             </Link>{" "}
             resources.
           </p>
-          <Button nativeButton={false} render={<Link href="/signup" />}>
-            Get started free
+          <Button nativeButton={false} render={<Link href="/dashboard" />}>
+            Open dashboard
           </Button>
         </div>
       </section>
