@@ -21,20 +21,48 @@ interface HealthResponse {
 export default function StatusPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [requestError, setRequestError] = useState(false);
+
+  async function fetchHealth(): Promise<HealthResponse> {
+    const response = await fetch("/api/health", { cache: "no-store" });
+    return response.json();
+  }
+
+  useEffect(() => {
+    let active = true;
+    void fetchHealth()
+      .then((result) => {
+        if (active) {
+          setHealth(result);
+          setRequestError(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setHealth(null);
+          setRequestError(true);
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function check() {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/health", { cache: "no-store" });
-      setHealth(await res.json());
+      setHealth(await fetchHealth());
+      setRequestError(false);
+    } catch {
+      setHealth(null);
+      setRequestError(true);
     } finally {
       setIsLoading(false);
     }
   }
-
-  useEffect(() => {
-    check();
-  }, []);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-12 sm:px-6">
@@ -95,12 +123,14 @@ export default function StatusPage() {
             </dl>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">Checking…</p>
+          <p className="text-sm text-muted-foreground">
+            {isLoading ? "Checking…" : requestError ? "Status is temporarily unavailable." : "No status data."}
+          </p>
         )}
       </Card>
 
       <p className="text-xs text-muted-foreground">
-        This is a v1 status page reporting the odds data source's health at
+        This is a v1 status page reporting the odds data source&apos;s health at
         the moment you load this page — it does not yet track historical
         uptime or send outage notifications.
       </p>

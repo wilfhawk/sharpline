@@ -4,18 +4,13 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getOddsProvider } from "@/lib/odds-provider";
 import { computeAllOpportunities } from "@/lib/opportunities";
 import { computeClv } from "@/lib/clv";
+import { isCronAuthorized } from "@/lib/cron-auth";
 
 export const maxDuration = 60;
 
 /** How long past kickoff we keep retrying before giving up and marking "missed"
  * (the provider may not post a line again, or the game may already be over). */
 const MISSED_AFTER_MS = 3 * 60 * 60 * 1000;
-
-function isAuthorized(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // no secret configured yet — allow (dev/local convenience)
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
 
 /**
  * Vercel Cron target: for every logged bet still "pending" whose event has
@@ -25,7 +20,7 @@ function isAuthorized(request: NextRequest): boolean {
  * manual "closing fair %" entry in My Bets remains available as a fallback).
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(process.env.CRON_SECRET, process.env.NODE_ENV, request.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   if (!isSupabaseConfigured()) {

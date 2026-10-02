@@ -156,8 +156,7 @@ function buildMarket(
  * one rawMarket can yield many two-way markets here.
  */
 function buildPlayerPropMarkets(
-  raw: RawOddsApiMarket,
-  event: RawOddsApiEvent
+  raw: RawOddsApiMarket
 ): MarketBuildResult[] {
   const groups = new Map<string, RawOddsApiOutcome[]>();
   for (const outcome of raw.outcomes) {
@@ -232,7 +231,7 @@ export function mapTheOddsApiEvents(
           rawMarket.key === "h2h" || rawMarket.key === "spreads" || rawMarket.key === "totals";
         const built = isFeaturedMarket
           ? [buildMarket(rawMarket, rawEvent)].filter((m): m is MarketBuildResult => m !== null)
-          : buildPlayerPropMarkets(rawMarket, rawEvent);
+          : buildPlayerPropMarkets(rawMarket);
 
         for (const result of built) {
           const marketId = `${rawEvent.id}:${result.lineKey}`;

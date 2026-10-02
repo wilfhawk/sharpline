@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import type { SubscriptionTier } from "@/lib/types";
 
 const STORAGE_KEY = "sharpline:tier-preview";
@@ -8,6 +8,7 @@ const TIER_EVENT = "sharpline:tier-preview-changed";
 
 /** null = no override, use the viewer's real subscription tier (or "free" when signed out). */
 type TierPreview = SubscriptionTier | null;
+let cachedTier: TierPreview | undefined;
 
 function readStoredTier(): TierPreview {
   if (typeof window === "undefined") return null;
@@ -23,20 +24,7 @@ function readStoredTier(): TierPreview {
  * same pattern as useBankroll/useAlertSettings.
  */
 export function useTierPreview() {
-  const [tierPreview, setTierPreviewState] = useState<TierPreview>(null);
-
-  useEffect(() => {
-    setTierPreviewState(readStoredTier());
-    function onChange() {
-      setTierPreviewState(readStoredTier());
-    }
-    window.addEventListener(TIER_EVENT, onChange);
-    window.addEventListener("storage", onChange);
-    return () => {
-      window.removeEventListener(TIER_EVENT, onChange);
-      window.removeEventListener("storage", onChange);
-    };
-  }, []);
+  const tierPreview = useSyncExternalStore(subscribe, getSnapshot, () => null);
 
   const setTierPreview = useCallback((value: TierPreview) => {
     if (value) {
@@ -44,8 +32,27 @@ export function useTierPreview() {
     } else {
       window.localStorage.removeItem(STORAGE_KEY);
     }
+    cachedTier = value;
     window.dispatchEvent(new Event(TIER_EVENT));
   }, []);
 
   return { tierPreview, setTierPreview };
+}
+
+function getSnapshot(): TierPreview {
+  if (cachedTier === undefined) cachedTier = readStoredTier();
+  return cachedTier;
+}
+
+function subscribe(onStoreChange: () => void) {
+  const onChange = () => {
+    cachedTier = undefined;
+    onStoreChange();
+  };
+  window.addEventListener(TIER_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(TIER_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
 }

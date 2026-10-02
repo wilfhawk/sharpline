@@ -8,7 +8,6 @@ import {
   formatAmericanOdds,
   formatEvPercent,
 } from "@/lib/display";
-import type { EvOpportunity } from "@/lib/types";
 import type { EventOpportunityGroup } from "@/lib/opportunity-groups";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
 import { LiveOrTimeToStart } from "./OpportunityTable";

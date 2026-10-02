@@ -17,16 +17,11 @@ import {
 import { sendEmail } from "@/lib/email/resend";
 import { formatEvPercent } from "@/lib/display";
 import type { OpportunityFilters } from "@/hooks/useOpportunities";
+import { isCronAuthorized } from "@/lib/cron-auth";
 
 export const maxDuration = 60;
 
 const COOLDOWN_MS = 30 * 60 * 1000;
-
-function isAuthorized(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // no secret configured yet — allow (dev/local convenience)
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
 
 function renderDigestHtml(candidates: AlertCandidate[]): string {
   const rows = candidates
@@ -47,7 +42,7 @@ function renderDigestHtml(candidates: AlertCandidate[]): string {
  * user for anything new. Schedule in vercel.json; protect with CRON_SECRET.
  */
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(process.env.CRON_SECRET, process.env.NODE_ENV, request.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   if (!isSupabaseConfigured()) {
@@ -118,15 +113,16 @@ export async function GET(request: NextRequest) {
     const newCandidates = filterNewAlertCandidates(candidates, userRecentAlerts, Date.now(), COOLDOWN_MS);
     if (newCandidates.length === 0) continue;
 
-    if (user.email) {
-      await sendEmail({
-        to: user.email,
-        subject: `SharpLine: ${newCandidates.length} new opportunit${newCandidates.length === 1 ? "y" : "ies"}`,
-        html: renderDigestHtml(newCandidates),
-      });
-    }
+    if (!user.email) continue;
 
-    await admin.from("alert_log").insert(
+    const emailSent = await sendEmail({
+      to: user.email,
+      subject: `SharpLine: ${newCandidates.length} new opportunit${newCandidates.length === 1 ? "y" : "ies"}`,
+      html: renderDigestHtml(newCandidates),
+    });
+    if (!emailSent) continue;
+
+    const { error: alertLogError } = await admin.from("alert_log").insert(
       newCandidates.map((c) => ({
         user_id: user.id,
         opportunity_type: c.opportunityType,
@@ -136,6 +132,10 @@ export async function GET(request: NextRequest) {
         ev_percent: c.evPercent,
       }))
     );
+    if (alertLogError) {
+      console.error("Alert email sent but delivery log insert failed", alertLogError.code);
+      return NextResponse.json({ error: "Alert delivery logging failed." }, { status: 500 });
+    }
 
     usersAlerted += 1;
     alertsSent += newCandidates.length;

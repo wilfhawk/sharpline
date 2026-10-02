@@ -44,8 +44,8 @@ data; `middleware.ts` skips the Supabase session check entirely):
 | `AGE_GATE_MINIMUM` | Minimum age enforced by the signup age-gate modal (default 21) |
 
 To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`,
-`0002_user_extensions.sql`, and `0003_plus_tier_alerts_clv.sql` (in that
-order) against your project, then add `<your-domain>/api/auth/callback` as an
+`0002_user_extensions.sql`, `0003_plus_tier_alerts_clv.sql`, and
+`0004_launch_hardening.sql` (in that order) against your project, then add `<your-domain>/api/auth/callback` as an
 authorized redirect URI for the Google provider in your Supabase Auth
 settings (see `app/api/auth/callback/route.ts`).
 

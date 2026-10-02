@@ -11,8 +11,8 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    globals: true,
-    setupFiles: ["./vitest.setup.ts"],
+    pool: "vmThreads",
+    maxWorkers: 1,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

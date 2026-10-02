@@ -6,12 +6,12 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
  * Geofencing hook stub (see COMPLIANCE.md) — always allows for now. Wire this up to a
  * real state/country ruleset only if legal counsel advises geofencing before launch.
  */
-function geoCheck(_request: NextRequest): { allowed: boolean } {
+function geoCheck(): { allowed: boolean } {
   return { allowed: true };
 }
 
 export async function middleware(request: NextRequest) {
-  geoCheck(request);
+  geoCheck();
 
   // No Supabase project wired up yet (mock-data-only dev mode) — nothing to check.
   if (!isSupabaseConfigured()) {

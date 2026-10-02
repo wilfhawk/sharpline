@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         <p>
           To provide and secure your account, process payments, communicate
           service updates, comply with legal obligations (including
-          age/jurisdiction verification), and improve SharpLine's product.
+          age/jurisdiction verification), and improve SharpLine&apos;s product.
         </p>
       </section>
 

@@ -7,7 +7,7 @@ export default function ChangelogPage() {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-12 sm:px-6">
       <div>
         <h1 className="text-2xl font-semibold">Changelog</h1>
-        <p className="text-sm text-muted-foreground">What's shipped, most recent first.</p>
+        <p className="text-sm text-muted-foreground">What&apos;s shipped, most recent first.</p>
       </div>
 
       <div className="flex flex-col gap-8">

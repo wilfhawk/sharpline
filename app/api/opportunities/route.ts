@@ -5,8 +5,12 @@ import { findPositiveEV } from "@/lib/ev-engine";
 import { filterLiveOnly } from "@/lib/live";
 import { applyTierGating } from "@/lib/subscription";
 import { getRequestTierWithOverride } from "@/lib/get-request-tier";
+import { enforcePublicRateLimit } from "@/lib/api-rate-limit";
 
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await enforcePublicRateLimit(request, "opportunities", 120);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const params = request.nextUrl.searchParams;
   const sport = params.get("sport");
   const sportsbookSlug = params.get("sportsbook");

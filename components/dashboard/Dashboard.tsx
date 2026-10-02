@@ -22,7 +22,7 @@ export function Dashboard() {
   const [filters, setFilters] = useState<OpportunityFilters>({ minEv: 2 });
   const { data, isLoading, isError } = useOpportunities(filters);
 
-  const opportunities = data?.opportunities ?? [];
+  const opportunities = useMemo(() => data?.opportunities ?? [], [data?.opportunities]);
   const eventGroups = useMemo(
     () => groupOpportunitiesByEvent(opportunities),
     [opportunities]

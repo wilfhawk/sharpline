@@ -13,7 +13,7 @@ export default function TermsPage() {
         <p>
           SharpLine is a data and analysis tool. It compares publicly
           available sportsbook odds against a de-vigged Pinnacle benchmark to
-          highlight statistical pricing discrepancies ("+EV opportunities").
+          highlight statistical pricing discrepancies (&quot;+EV opportunities&quot;).
           SharpLine does not accept wagers, does not hold or transmit funds
           related to gambling, and does not facilitate wagering of any kind.
           It is solely an informational and analytical service.
@@ -25,7 +25,7 @@ export default function TermsPage() {
           2. No guarantee of profit
         </h2>
         <p>
-          "Expected value" (EV) is a statistical estimate derived from odds
+          &quot;Expected value&quot; (EV) is a statistical estimate derived from odds
           data at a point in time. A positive EV% reflects a theoretical,
           long-run statistical edge under stated assumptions — it is not a
           prediction, a guarantee, or a certainty of any individual outcome.
@@ -61,7 +61,7 @@ export default function TermsPage() {
           responsible for, the accuracy, availability, or timeliness of
           third-party odds data, nor for the terms, availability, or conduct
           of any third-party sportsbook. Any wager you place is placed
-          directly with the third-party sportsbook, under that sportsbook's
+          directly with the third-party sportsbook, under that sportsbook&apos;s
           own terms, not with SharpLine.
         </p>
       </section>
@@ -91,7 +91,7 @@ export default function TermsPage() {
           7. Disclaimer of warranties; limitation of liability
         </h2>
         <p>
-          SharpLine is provided "as is" without warranties of any kind. To
+          SharpLine is provided &quot;as is&quot; without warranties of any kind. To
           the maximum extent permitted by law, SharpLine and its operators
           are not liable for any losses, including gambling losses, arising
           from your use of this service or reliance on any data or analysis
