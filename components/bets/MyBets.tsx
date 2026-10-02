@@ -139,7 +139,7 @@ function BetRow({ bet }: { bet: LoggedBet }) {
         </div>
       ) : (
         <span className="w-fit rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
-          Pending — closing line captures automatically near kickoff
+          Pending — capture runs on the configured schedule; timing depends on the hosting plan
         </span>
       )}
     </Card>

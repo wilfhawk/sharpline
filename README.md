@@ -66,10 +66,10 @@ settings (see `app/api/auth/callback/route.ts`).
 1. Sign up at [resend.com](https://resend.com), verify a sending domain (or
    use their shared test domain for development), and create an API key.
 2. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in your environment.
-3. `vercel.json` already schedules `/api/cron/alerts` (every 15 min) and
-   `/api/cron/capture-closing-lines` (hourly) — Vercel picks this up
-   automatically on deploy once the project is on a plan that supports Cron
-   Jobs.
+3. `vercel.json` schedules alerts daily at 15:00 UTC and closing-line capture
+   daily at 00:00 UTC, which is compatible with Vercel Hobby's once-daily cron
+   limit. On Vercel Pro, you can change these schedules to every 15 minutes
+   and hourly respectively for timely alerts and near-kickoff CLV capture.
 4. Set a `CRON_SECRET` env var (any random string) so only Vercel's own cron
    invocations can trigger these routes.
 
