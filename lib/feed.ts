@@ -32,7 +32,7 @@ export async function readFeed(delayed = false): Promise<FeedSnapshot> {
   if (error) throw new Error("Snapshot storage unavailable. Apply database migrations.");
   if (stored && (delayed || now - Date.parse(stored.captured_at) < getOddsCacheSeconds() * 1000)) {
     return {
-      data: usableFeed(stored.data as OddsProviderData, delayed ? Date.parse(stored.captured_at) : now),
+      data: usableFeed(stored.data as OddsProviderData, Date.parse(stored.captured_at)),
       capturedAt: stored.captured_at, isMock: false, providerName: provider.name,
       warnings: stored.warnings ?? [],
     };
