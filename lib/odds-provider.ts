@@ -1,6 +1,6 @@
 import type { EventSummary, OddsQuote, Sportsbook, TwoWayMarket } from "./types";
 import { MockOddsProvider } from "./providers/mock-provider";
-import { TheOddsApiProvider } from "./providers/the-odds-api-provider";
+import { TheOddsApiProvider, DEFAULT_PROP_MARKETS } from "./providers/the-odds-api-provider";
 
 export interface OddsProviderData {
   warnings?: string[];
@@ -28,6 +28,11 @@ export function getOddsCacheSeconds(): number {
   return Number.isFinite(seconds) && seconds >= 30 ? seconds : 60;
 }
 
+function positiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export function getOddsProvider(): OddsProvider {
   const providerName = process.env.ODDS_PROVIDER ?? "mock";
 
@@ -53,10 +58,12 @@ export function getOddsProvider(): OddsProvider {
         regions: process.env.ODDS_API_REGIONS ?? "us,eu",
         baseUrl: process.env.ODDS_API_BASE_URL ?? "https://api.the-odds-api.com/v4",
         cacheSeconds: getOddsCacheSeconds(),
-        extraMarkets: (process.env.ODDS_API_EXTRA_MARKETS ?? "")
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
+        props: process.env.ODDS_API_PROPS === "true" ? {
+          marketsBySport: DEFAULT_PROP_MARKETS,
+          maxEventsPerSport: positiveInt(process.env.ODDS_API_PROPS_MAX_EVENTS, 3),
+          regions: process.env.ODDS_API_PROPS_REGIONS ?? "us",
+          windowHours: positiveInt(process.env.ODDS_API_PROPS_WINDOW_HOURS, 36),
+        } : null,
         sharpBookKeys: (process.env.ODDS_API_SHARP_BOOKS ?? "pinnacle")
           .split(",")
           .map((s) => s.trim())

@@ -8,7 +8,12 @@ const closeBetSchema = z.object({
   closingFairProbability: z.number().gt(0).lt(1),
 });
 
-/** Records the closing fair probability for a logged bet and computes its CLV%. */
+// `null` clears a previously recorded result.
+const settleBetSchema = z.object({
+  result: z.enum(["win", "loss", "push", "void"]).nullable(),
+});
+
+/** Records a bet's result, or the closing fair probability (and resulting CLV%). */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -26,10 +31,27 @@ export async function PATCH(
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  const settle = settleBetSchema.safeParse(body);
+  if (settle.success) {
+    const { data, error } = await supabase
+      .from("logged_bets")
+      .update({
+        result: settle.data.result,
+        settled_at: settle.data.result ? new Date().toISOString() : null,
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) {
+      return NextResponse.json({ error: "Couldn't save the result. Please try again." }, { status: 500 });
+    }
+    return NextResponse.json({ bet: data });
+  }
+
   const parsed = closeBetSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.message }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
   const { data: bet, error: fetchError } = await supabase

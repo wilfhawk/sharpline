@@ -15,6 +15,7 @@ import {
   evColorClasses,
   formatAmericanOdds,
   formatEvPercent,
+  formatMarketType,
   formatTimeToStart,
 } from "@/lib/display";
 import type { EvOpportunity } from "@/lib/types";
@@ -141,7 +142,7 @@ export function OpportunityTable({
                   <TableCell className="tabular-nums whitespace-nowrap">
                     <LiveOrTimeToStart status={o.event.status} startTime={o.event.startTime} />
                   </TableCell>
-                  <TableCell className="capitalize">{o.market.marketType}</TableCell>
+                  <TableCell>{formatMarketType(o.market.marketType)}</TableCell>
                   <TableCell>{o.sportsbook.name}</TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">
                     {formatAmericanOdds(o.fairOddsDecimal)}
@@ -168,7 +169,7 @@ export function OpportunityTable({
                                 <span className="min-w-0">
                                   <span className="font-medium">{offer.sideLabel}</span>
                                   <span className="text-muted-foreground">
-                                    {` · ${offer.market.marketType} · ${offer.sportsbook.name}`}
+                                    {` · ${formatMarketType(offer.market.marketType)} · ${offer.sportsbook.name}`}
                                   </span>
                                 </span>
                                 <span className="flex items-center gap-3 tabular-nums">

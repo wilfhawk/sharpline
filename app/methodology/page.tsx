@@ -104,7 +104,20 @@ fairProbabilityB = rawB^k`}
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-base font-medium text-foreground">6. Limits of this approach</h2>
+        <h2 className="text-base font-medium text-foreground">6. Player props</h2>
+        <p>
+          Sharp books rarely post player props, so there is no Pinnacle price to
+          de-vig. For props, SharpLine uses the average de-vigged probability of
+          the <em>other</em> books quoting the exact same player and line,
+          excluding the book being scored, and requires at least three of them.
+          Each prop edge is labeled &quot;Market consensus&quot; with the number
+          of books used. A consensus is a weaker benchmark than a sharp price,
+          so treat prop edges as leads to verify, not certainties.
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-base font-medium text-foreground">7. Limits of this approach</h2>
         <p>
           A de-vigged sharp price is an estimate of fair probability, not a
           guarantee — it can still be wrong, and lines move. SharpLine

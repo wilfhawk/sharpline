@@ -52,7 +52,7 @@ ODDS_API_CACHE_SECONDS=3600
 Cost per refresh = `[sports] x [markets=3] x [regions]`. Default (5 sports,
 2 regions) = 30 credits/refresh ≈ 16 refreshes/month. Track fewer sports or
 drop a region to stretch the budget further — see `README.md` for the full
-breakdown, optional `ODDS_API_EXTRA_MARKETS` (player props), and
+breakdown, optional player props (`ODDS_API_PROPS`), and
 `ODDS_API_SHARP_BOOKS` fallback chain.
 
 See `COMPLIANCE.md` before using live odds data commercially (licensing terms).

@@ -17,7 +17,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["lib/{ev-engine,odds-utils,opportunities,subscription,arbitrage,middles,sgp,kelly,clv,alerts,earnings,feed-quality,auth-redirect,game-catalog}.ts"],
+      include: ["lib/{ev-engine,odds-utils,opportunities,subscription,arbitrage,middles,sgp,kelly,clv,alerts,earnings,performance,promos,book-tracker,feed-quality,auth-redirect,game-catalog}.ts"],
       thresholds: { lines: 80, statements: 80, functions: 80, branches: 80 },
       exclude: ["lib/**/*.test.ts", "lib/supabase/**", "lib/stripe.ts"],
     },

@@ -7,6 +7,7 @@ import {
   evColorClasses,
   formatAmericanOdds,
   formatEvPercent,
+  formatMarketType,
 } from "@/lib/display";
 import type { EventOpportunityGroup } from "@/lib/opportunity-groups";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
@@ -77,7 +78,7 @@ export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
                   <span className="min-w-0">
                     <span className="font-medium">{offer.sideLabel}</span>
                     <span className="block text-xs text-muted-foreground">
-                      {offer.market.marketType} · {offer.sportsbook.name} · Odds {formatAmericanOdds(offer.oddsDecimal)}
+                      {formatMarketType(offer.market.marketType)} · {offer.sportsbook.name} · Odds {formatAmericanOdds(offer.oddsDecimal)}
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-2">

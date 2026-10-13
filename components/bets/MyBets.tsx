@@ -6,8 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBets, useCloseBet, useDeleteBet, type LoggedBet } from "@/hooks/useBets";
+import { useBets, useCloseBet, useDeleteBet, useSettleBet, type LoggedBet } from "@/hooks/useBets";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { BetPerformance } from "@/components/bets/BetPerformance";
+import { betProfit, type BetResult } from "@/lib/performance";
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -45,10 +47,52 @@ export function MyBets() {
   }
 
   return (
-    <div className="grid gap-3">
-      {bets.map((bet) => (
-        <BetRow key={bet.id} bet={bet} />
+    <div className="grid gap-6">
+      <BetPerformance bets={bets} />
+      <div className="grid gap-3">
+        {bets.map((bet) => (
+          <BetRow key={bet.id} bet={bet} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const RESULT_OPTIONS: { value: BetResult; label: string }[] = [
+  { value: "win", label: "Won" },
+  { value: "loss", label: "Lost" },
+  { value: "push", label: "Push" },
+  { value: "void", label: "Void" },
+];
+
+function ResultButtons({ bet }: { bet: LoggedBet }) {
+  const settle = useSettleBet();
+  async function choose(result: BetResult | null) {
+    try {
+      await settle.mutateAsync({ id: bet.id, result });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't save the result.");
+    }
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Bet result">
+      {RESULT_OPTIONS.map((option) => (
+        <Button
+          key={option.value}
+          size="sm"
+          variant={bet.result === option.value ? "default" : "outline"}
+          aria-pressed={bet.result === option.value}
+          disabled={settle.isPending}
+          onClick={() => choose(bet.result === option.value ? null : option.value)}
+        >
+          {option.label}
+        </Button>
       ))}
+      {bet.result && (
+        <span className={`ml-1 text-sm font-medium tabular-nums ${betProfit(bet) >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+          {betProfit(bet) >= 0 ? "+" : ""}{CURRENCY_FORMATTER.format(betProfit(bet))}
+        </span>
+      )}
     </div>
   );
 }
@@ -99,6 +143,8 @@ function BetRow({ bet }: { bet: LoggedBet }) {
         <span>Odds {bet.odds_decimal.toFixed(2)}</span>
         <span>{new Date(bet.placed_at).toLocaleDateString()}</span>
       </div>
+
+      <ResultButtons bet={bet} />
 
       {bet.clv_percent !== null ? (
         <p className="flex items-center gap-1 text-sm font-medium">

@@ -31,12 +31,12 @@ export default async function BetsPage() {
   return (
     <>
       <AppHeader />
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8 sm:px-6">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-8 sm:px-6">
         <div>
           <h1 className="text-xl font-semibold">My Bets</h1>
           <p className="text-sm text-muted-foreground">
-            Track Closing Line Value (CLV) — the single best predictor of
-            long-run betting profitability.
+            Track results and Closing Line Value (CLV) — the single best
+            predictor of long-run betting profitability.
           </p>
         </div>
         <MyBets />

@@ -7,6 +7,20 @@ export interface ChangelogEntry {
 /** Add a new entry to the TOP of this array whenever you ship something user-visible. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-12",
+    title: "All games, earnings calculator, player props, and promo tools",
+    items: [
+      "Added All Games: browse every game by sport, league, and status and compare prices, whether or not there is an edge",
+      "Added the Earnings & Risk calculator under Learn, with a 95% outcome range and chance of a net loss after costs",
+      "Added the Promo Converter for bonus bets, profit boosts, risk-free bets, and deposit matches",
+      "Added My Books to track balances, bet limits, and promos; suggested stakes now respect a book's limit",
+      "Added Bet links to the sportsbook on each opportunity",
+      "Added player props, scored against the consensus of the other books (see Methodology)",
+      "My Bets now tracks results with profit, ROI, and a chart of actual versus expected profit",
+      "The landing page now shows today's free picks from the live feed",
+    ],
+  },
+  {
     date: "2026-10-11",
     title: "More sports and a Pro de-vig model picker",
     items: [

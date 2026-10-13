@@ -187,3 +187,41 @@ describe("sharp reference priority fallback", () => {
     expect(opportunities.every((o) => o.sportsbook.id !== "sb-circa")).toBe(true);
   });
 });
+
+describe("player prop consensus fair odds", () => {
+  const event = { id: "evt-p", sport: "Basketball", league: "NBA", homeTeam: "H", awayTeam: "A", startTime: new Date().toISOString(), status: "upcoming" as const };
+  const market = { id: "mkt-prop", event, marketType: "player_prop" as const, lineValue: 25.5, sideALabel: "Star Over 25.5 Points", sideBLabel: "Star Under 25.5 Points" };
+  const book = (id: string) => ({ id, name: id, slug: id, logoUrl: null, isSharpReference: false });
+  const quote = (sportsbookId: string, over: number, under: number) => ({ marketId: "mkt-prop", sportsbookId, oddsDecimalA: americanToDecimal(over), oddsDecimalB: americanToDecimal(under), timestamp: new Date().toISOString() });
+  const data = (quotes: ReturnType<typeof quote>[], marketType: "player_prop" | "total" = "player_prop"): OddsProviderData => ({
+    sportsbooks: ["a", "b", "c", "d"].map(book),
+    events: [event],
+    markets: [{ ...market, marketType }],
+    quotes,
+  });
+
+  it("flags an outlier price against the average of the other books", () => {
+    const result = computeAllOpportunities(data([quote("a", -110, -110), quote("b", -110, -110), quote("c", -110, -110), quote("d", 130, -160)]));
+    const outlier = result.find((o) => o.sportsbook.id === "d" && o.side === "A");
+    expect(outlier?.evPercent).toBeGreaterThan(10);
+    expect(outlier?.referenceBook).toBe("Market consensus (3 books)");
+    expect(result.find((o) => o.sportsbook.id === "a" && o.side === "A")!.evPercent).toBeLessThan(0);
+  });
+
+  it("needs at least three other books", () => {
+    expect(computeAllOpportunities(data([quote("a", -110, -110), quote("b", -110, -110), quote("c", 130, -160)]))).toHaveLength(0);
+  });
+
+  it("only applies to player props", () => {
+    expect(computeAllOpportunities(data([quote("a", -110, -110), quote("b", -110, -110), quote("c", -110, -110), quote("d", 130, -160)], "total"))).toHaveLength(0);
+  });
+
+  it("falls back to the book's site when the feed has no link, and prefers a feed link", () => {
+    const fixture = buildFixture();
+    fixture.sportsbooks[1] = { ...fixture.sportsbooks[1], slug: "draftkings" };
+    fixture.quotes[1] = { ...fixture.quotes[1], linkA: "https://sportsbook.draftkings.com/slip/1" };
+    const result = computeAllOpportunities(fixture);
+    expect(result.find((o) => o.side === "A")?.betLink).toBe("https://sportsbook.draftkings.com/slip/1");
+    expect(result.find((o) => o.side === "B")?.betLink).toBe("https://sportsbook.draftkings.com/");
+  });
+});

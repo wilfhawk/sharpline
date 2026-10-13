@@ -7,11 +7,14 @@ export interface RawOddsApiOutcome {
   point?: number;
   /** Player name for player-prop markets (e.g. player_points); absent on h2h/spreads/totals. */
   description?: string;
+  /** Betslip deep link, present when the request sets includeLinks=true. */
+  link?: string;
 }
 
 export interface RawOddsApiMarket {
   key: "h2h" | "spreads" | "totals" | string;
   last_update?: string;
+  link?: string;
   outcomes: RawOddsApiOutcome[];
 }
 
@@ -19,6 +22,7 @@ export interface RawOddsApiBookmaker {
   key: string;
   title: string;
   last_update?: string;
+  link?: string;
   markets: RawOddsApiMarket[];
 }
 
@@ -54,6 +58,20 @@ function deriveSportFamily(sportKey: string): string {
 
 function deriveStatus(commenceTime: string): EventStatus {
   return new Date(commenceTime).getTime() > Date.now() ? "upcoming" : "live";
+}
+
+/** Only https links from the feed are kept, so a bad payload can't inject other URL schemes into the UI. */
+function safeBetLink(...candidates: (string | undefined)[]): string | undefined {
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      const url = new URL(candidate);
+      if (url.protocol === "https:") return url.toString();
+    } catch {
+      // try the next, less specific link
+    }
+  }
+  return undefined;
 }
 
 function formatSignedPoint(point: number): string {
@@ -253,6 +271,8 @@ export function mapTheOddsApiEvents(
             sportsbookId: bookmaker.key,
             oddsDecimalA: result.sideAOutcome.price,
             oddsDecimalB: result.sideBOutcome.price,
+            linkA: safeBetLink(result.sideAOutcome.link, rawMarket.link, bookmaker.link),
+            linkB: safeBetLink(result.sideBOutcome.link, rawMarket.link, bookmaker.link),
             timestamp:
               rawMarket.last_update ?? bookmaker.last_update ?? new Date(0).toISOString(),
           });
@@ -276,10 +296,37 @@ export interface TheOddsApiConfig {
   baseUrl: string;
   /** How long Next.js may serve a cached response before re-fetching, protecting the API quota. */
   cacheSeconds: number;
-  /** Opt-in player-prop market keys (e.g. "player_points") added to the same bulk /odds call. Each adds to the per-refresh credit cost (markets x regions) — off by default. */
-  extraMarkets: string[];
+  /** Player props are only served per event, so they are opt-in and capped to limit credit use. Null disables props. */
+  props: PropsConfig | null;
   /** Priority-ordered bookmaker keys treated as sharp reference books (index = priority). Defaults to ["pinnacle"]. */
   sharpBookKeys: string[];
+}
+
+export interface PropsConfig {
+  /** Prop market keys to request, per sport key. Sports without an entry get no props. */
+  marketsBySport: Record<string, string[]>;
+  /** Soonest upcoming events per sport that get a props request (each costs markets x regions credits). */
+  maxEventsPerSport: number;
+  regions: string;
+  /** Only events starting within this many hours are requested; books post props close to game time. */
+  windowHours: number;
+}
+
+export const DEFAULT_PROP_MARKETS: Record<string, string[]> = {
+  basketball_nba: ["player_points", "player_rebounds", "player_assists"],
+  americanfootball_nfl: ["player_pass_yds", "player_rush_yds", "player_reception_yds"],
+  americanfootball_ncaaf: ["player_pass_yds", "player_rush_yds", "player_reception_yds"],
+  baseball_mlb: ["pitcher_strikeouts", "batter_hits"],
+  icehockey_nhl: ["player_points", "player_shots_on_goal"],
+};
+
+/** Appends props bookmakers/markets from a per-event response onto the featured-market event. */
+export function mergePropMarkets(event: RawOddsApiEvent, propEvent: RawOddsApiEvent): void {
+  for (const propBook of propEvent.bookmakers ?? []) {
+    const existing = event.bookmakers.find((book) => book.key === propBook.key);
+    if (existing) existing.markets.push(...propBook.markets);
+    else event.bookmakers.push({ ...propBook, markets: [...propBook.markets] });
+  }
 }
 
 /** Real odds provider backed by The Odds API (https://the-odds-api.com). */
@@ -295,21 +342,75 @@ export class TheOddsApiProvider implements OddsProvider {
     );
     const events: RawOddsApiEvent[] = [];
     const warnings: string[] = [];
+    const sportOfEvent = new Map<string, string>();
     perSport.forEach((result, index) => {
-      if (result.status === "fulfilled") events.push(...result.value);
-      else warnings.push(`Unavailable sport: ${this.config.sportKeys[index]}`);
+      if (result.status === "fulfilled") {
+        events.push(...result.value);
+        for (const event of result.value) sportOfEvent.set(event.id, this.config.sportKeys[index]);
+      } else warnings.push(`Unavailable sport: ${this.config.sportKeys[index]}`);
     });
     if (perSport.every((result) => result.status === "rejected")) throw new Error("All sports feeds are unavailable.");
+    if (this.config.props) await this.attachProps(events, sportOfEvent, this.config.props, warnings);
     return { ...mapTheOddsApiEvents(events, this.config.sharpBookKeys), warnings };
+  }
+
+  private async attachProps(events: RawOddsApiEvent[], sportOfEvent: Map<string, string>, props: PropsConfig, warnings: string[]) {
+    const now = Date.now();
+    const horizon = now + props.windowHours * 3_600_000;
+    const perSportCount = new Map<string, number>();
+    const targets = events
+      .filter((event) => {
+        const start = Date.parse(event.commence_time);
+        return start > now && start <= horizon;
+      })
+      .sort((a, b) => Date.parse(a.commence_time) - Date.parse(b.commence_time))
+      .filter((event) => {
+        const sportKey = sportOfEvent.get(event.id);
+        if (!sportKey || !props.marketsBySport[sportKey]?.length) return false;
+        const count = perSportCount.get(sportKey) ?? 0;
+        perSportCount.set(sportKey, count + 1);
+        return count < props.maxEventsPerSport;
+      });
+
+    const results = await Promise.allSettled(
+      targets.map((event) => this.fetchEventProps(sportOfEvent.get(event.id)!, event.id, props))
+    );
+    let failed = 0;
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") mergePropMarkets(targets[index], result.value);
+      else failed += 1;
+    });
+    if (failed > 0) warnings.push(`Player props unavailable for ${failed} of ${targets.length} games.`);
+  }
+
+  private async fetchEventProps(sportKey: string, eventId: string, props: PropsConfig): Promise<RawOddsApiEvent> {
+    const url = new URL(`${this.config.baseUrl}/sports/${sportKey}/events/${encodeURIComponent(eventId)}/odds`);
+    url.searchParams.set("apiKey", this.config.apiKey);
+    url.searchParams.set("regions", props.regions);
+    url.searchParams.set("markets", props.marketsBySport[sportKey].join(","));
+    url.searchParams.set("oddsFormat", "decimal");
+    url.searchParams.set("dateFormat", "iso");
+    url.searchParams.set("includeLinks", "true");
+
+    const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(10_000),
+      next: { revalidate: this.config.cacheSeconds },
+    });
+    if (!response.ok) throw new Error(`Props request failed for "${sportKey}": ${response.status}`);
+    console.info("odds_quota", { sport: sportKey, kind: "props", remaining: response.headers.get("x-requests-remaining"), last: response.headers.get("x-requests-last") });
+    const data: unknown = await response.json();
+    if (!data || typeof data !== "object" || !Array.isArray((data as RawOddsApiEvent).bookmakers)) throw new Error("Invalid props response.");
+    return data as RawOddsApiEvent;
   }
 
   private async fetchSportEvents(sportKey: string): Promise<RawOddsApiEvent[]> {
     const url = new URL(`${this.config.baseUrl}/sports/${sportKey}/odds/`);
     url.searchParams.set("apiKey", this.config.apiKey);
     url.searchParams.set("regions", this.config.regions);
-    url.searchParams.set("markets", ["h2h", "spreads", "totals", ...this.config.extraMarkets].join(","));
+    url.searchParams.set("markets", "h2h,spreads,totals");
     url.searchParams.set("oddsFormat", "decimal");
     url.searchParams.set("dateFormat", "iso");
+    url.searchParams.set("includeLinks", "true");
 
     const response = await fetch(url.toString(), {
       signal: AbortSignal.timeout(10_000),

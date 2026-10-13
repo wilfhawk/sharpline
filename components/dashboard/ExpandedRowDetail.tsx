@@ -12,9 +12,17 @@ import { StakeSizer } from "./StakeSizer";
 import { CopyBetButton } from "./CopyBetButton";
 import { ShowMathButton } from "./ShowMathButton";
 import type { EvOpportunity } from "@/lib/types";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
+import { useBookTracker } from "@/hooks/useBookTracker";
+import { activePromos } from "@/lib/book-tracker";
+import { buttonVariants } from "@/components/ui/button";
 
 export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity }) {
   const { tierPreview } = useTierPreview();
+  const { books, promos } = useBookTracker();
+  const bookProfile = books.find((book) => book.slug === opportunity.sportsbook.slug);
+  const openPromos = activePromos(promos, opportunity.sportsbook.slug);
   const history = useQuery<OddsHistoryPoint[]>({
     queryKey: ["history", opportunity.id, tierPreview],
     queryFn: async () => {
@@ -63,10 +71,28 @@ export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity 
       <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:items-start">
         <StakeSizer opportunity={opportunity} />
         <div className="flex gap-2">
+          {opportunity.betLink && (
+            <a
+              href={opportunity.betLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "default", size: "sm" })}
+            >
+              Bet at {opportunity.sportsbook.name} <ExternalLink className="size-3.5" aria-hidden="true" />
+            </a>
+          )}
           <CopyBetButton opportunity={opportunity} />
           <ShowMathButton opportunity={opportunity} />
         </div>
       </div>
+      {(bookProfile?.status === "limited" || bookProfile?.status === "closed" || openPromos.length > 0) && (
+        <p className="text-xs text-muted-foreground sm:col-span-2">
+          {bookProfile?.status === "closed" && `Your ${opportunity.sportsbook.name} account is marked closed. `}
+          {bookProfile?.status === "limited" && `Your ${opportunity.sportsbook.name} account is marked limited${bookProfile.maxBet !== null ? ` (max bet $${bookProfile.maxBet})` : ""}. `}
+          {openPromos.length > 0 && `You have ${openPromos.length} open ${openPromos.length === 1 ? "promo" : "promos"} here. `}
+          <Link href="/books" className="underline">My Books</Link>
+        </p>
+      )}
     </div>
   );
 }
@@ -75,7 +101,7 @@ function BookPriceList({
   rows,
   isLoading,
 }: {
-  rows: { sportsbook: { id: string; name: string }; oddsDecimal: number; evPercent: number | null }[];
+  rows: { sportsbook: { id: string; name: string }; oddsDecimal: number; evPercent: number | null; betLink?: string }[];
   isLoading: boolean;
 }) {
   if (isLoading) {
@@ -95,7 +121,13 @@ function BookPriceList({
           key={row.sportsbook.id}
           className="flex items-center justify-between px-3 py-2 text-sm"
         >
-          <span>{row.sportsbook.name}</span>
+          <span>
+            {row.betLink ? (
+              <a href={row.betLink} target="_blank" rel="noopener noreferrer" className="hover:underline" aria-label={`Open ${row.sportsbook.name}`}>
+                {row.sportsbook.name}
+              </a>
+            ) : row.sportsbook.name}
+          </span>
           <div className="flex items-center gap-2 tabular-nums">
             <span>{formatAmericanOdds(row.oddsDecimal)}</span>
             {row.evPercent === null ? (

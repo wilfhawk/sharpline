@@ -38,3 +38,54 @@ test("free comparisons are blocked and callback targets stay local", async ({ re
   const callback = await request.get("/api/auth/callback?next=https://example.com", { maxRedirects: 0 });
   expect(new URL(callback.headers().location).origin).toBe("http://localhost:3100");
 });
+test("landing shows live picks from the feed", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText("Today's free picks")).toBeVisible();
+  await expect(page.getByText("Sample data")).toBeVisible();
+  await expect(page.getByText("Games tracked")).toBeVisible();
+});
+
+test("promo converter locks a profit and updates with inputs", async ({ page }) => {
+  await page.goto("/promos");
+  await expect(page.getByText("$66.67", { exact: true })).toBeVisible();
+  await page.getByLabel("Bonus bet amount ($)").fill("200");
+  await expect(page.getByText("$133.33", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Deposit match" }).click();
+  await expect(page.getByText("Expected value", { exact: true })).toBeVisible();
+});
+
+test("my books persists limits and promos on this device", async ({ page }) => {
+  await page.goto("/books");
+  await page.getByRole("combobox", { name: "Sportsbook to add" }).selectOption({ label: "DraftKings" });
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  const card = page.getByRole("region", { name: "DraftKings" });
+  await card.getByRole("combobox").first().selectOption("limited");
+  await card.getByLabel("Max bet they will take ($)").fill("25");
+  await card.getByLabel("Promo title").fill("Bet $5 get $150");
+  await card.getByLabel("Promo value ($)").fill("150");
+  await card.getByRole("button", { name: "Add promo" }).click();
+  await page.reload();
+  const again = page.getByRole("region", { name: "DraftKings" });
+  await expect(again.getByLabel("Max bet they will take ($)")).toHaveValue("25");
+  await expect(again.getByText("Bet $5 get $150")).toBeVisible();
+});
+
+test("dashboard exposes player props with a market consensus reference", async ({ page }) => {
+  await page.goto("/dashboard?tier=pro");
+  await page.getByRole("combobox", { name: "Market type" }).click();
+  await page.getByRole("option", { name: "Player prop" }).click();
+  await expect(page.getByText("Showing sample data")).toBeVisible();
+  await page.getByRole("row").nth(1).click();
+  await page.getByRole("button", { name: /Over|Under/ }).first().click();
+  await expect(page.getByText(/Reference: Market consensus \(\d+ books\)/)).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Bet at / })).toBeVisible();
+});
+
+test("new pages fit a 375px screen", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  for (const path of ["/", "/promos", "/books", "/games"]) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), path).toBe(true);
+  }
+});

@@ -1,4 +1,5 @@
 import { calculateFairProbabilities, computeEV } from "./ev-engine";
+import { bookSiteUrl } from "./books";
 import type { OddsProviderData } from "./odds-provider";
 import type {
   BookComparisonRow,
@@ -29,6 +30,38 @@ function findSharpQuote(
     }
   }
   return best?.quote;
+}
+
+/** Props rarely have a sharp quote, so fair odds come from the other books' average de-vigged price. */
+export const MIN_CONSENSUS_BOOKS = 3;
+
+interface ConsensusFair {
+  fairProbabilityA: number;
+  fairProbabilityB: number;
+  bookCount: number;
+  timestamp: string;
+}
+
+function consensusFair(
+  marketQuotes: OddsQuote[],
+  excludeSportsbookId: string,
+  method: DevigMethod
+): ConsensusFair | undefined {
+  const others = marketQuotes.filter((quote) => quote.sportsbookId !== excludeSportsbookId);
+  if (others.length < MIN_CONSENSUS_BOOKS) return undefined;
+  let sumA = 0;
+  let latest = 0;
+  for (const quote of others) {
+    sumA += calculateFairProbabilities(quote.oddsDecimalA, quote.oddsDecimalB, method).fairProbabilityA;
+    latest = Math.max(latest, Date.parse(quote.timestamp));
+  }
+  const fairProbabilityA = sumA / others.length;
+  return {
+    fairProbabilityA,
+    fairProbabilityB: 1 - fairProbabilityA,
+    bookCount: others.length,
+    timestamp: new Date(latest).toISOString(),
+  };
 }
 
 function groupQuotesByMarket(quotes: OddsQuote[]): Map<string, OddsQuote[]> {
@@ -64,7 +97,19 @@ export function computeAllOpportunities(
     if (!market) continue;
 
     const sharpQuote = findSharpQuote(marketQuotes, sportsbookById);
-    if (!sharpQuote) continue;
+    if (!sharpQuote) {
+      if (market.marketType !== "player_prop") continue;
+      for (const quote of marketQuotes) {
+        const sportsbook = sportsbookById.get(quote.sportsbookId);
+        if (!sportsbook) continue;
+        const consensus = consensusFair(marketQuotes, quote.sportsbookId, method);
+        if (!consensus) continue;
+        const extras = { referenceBook: `Market consensus (${consensus.bookCount} books)`, referenceTimestamp: consensus.timestamp, devigMethod: method };
+        opportunities.push({ ...buildOpportunity(market, sportsbook, quote, "A", consensus.fairProbabilityA), ...extras });
+        opportunities.push({ ...buildOpportunity(market, sportsbook, quote, "B", consensus.fairProbabilityB), ...extras });
+      }
+      continue;
+    }
 
     const fair = calculateFairProbabilities(
       sharpQuote.oddsDecimalA,
@@ -112,6 +157,7 @@ function buildOpportunity(
     fairProbability,
     evPercent,
     snapshotTimestamp: quote.timestamp,
+    betLink: (side === "A" ? quote.linkA : quote.linkB) ?? bookSiteUrl(sportsbook.slug),
   };
 }
 
@@ -127,7 +173,7 @@ export function buildBookComparisonRows(
 
   const marketQuotes = data.quotes.filter((q) => q.marketId === marketId);
   const sharpQuote = findSharpQuote(marketQuotes, sportsbookById);
-  const fair = sharpQuote
+  const sharpFair = sharpQuote
     ? calculateFairProbabilities(
         sharpQuote.oddsDecimalA,
         sharpQuote.oddsDecimalB,
@@ -139,6 +185,9 @@ export function buildBookComparisonRows(
   for (const quote of marketQuotes) {
     const sportsbook = sportsbookById.get(quote.sportsbookId);
     if (!sportsbook) continue;
+    const fair =
+      sharpFair ??
+      (market.marketType === "player_prop" ? consensusFair(marketQuotes, quote.sportsbookId, method) : undefined);
 
     for (const side of ["A", "B"] as const) {
       const oddsDecimal = side === "A" ? quote.oddsDecimalA : quote.oddsDecimalB;
@@ -151,6 +200,7 @@ export function buildBookComparisonRows(
         side,
         sideLabel,
         oddsDecimal,
+        betLink: (side === "A" ? quote.linkA : quote.linkB) ?? bookSiteUrl(sportsbook.slug),
         evPercent:
           sportsbook.isSharpReference || fairProbability === undefined || (sharpQuote && Math.abs(Date.parse(quote.timestamp) - Date.parse(sharpQuote.timestamp)) > 60_000)
             ? null

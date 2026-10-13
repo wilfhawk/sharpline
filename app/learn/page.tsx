@@ -71,6 +71,7 @@ export default function LearnPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Link href="/learn/earnings" className="flex flex-col gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-5"><Calculator className="size-5 text-emerald-500" /><h2 className="font-medium">Earnings & Risk Calculator</h2><p className="text-sm text-muted-foreground">Explore hypothetical net returns, costs, and the chance of losing money across a range of assumptions.</p><span className="mt-auto text-sm underline">Open calculator</span></Link>
+        <Link href="/promos" className="flex flex-col gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-5"><Calculator className="size-5 text-emerald-500" /><h2 className="font-medium">Promo Converter</h2><p className="text-sm text-muted-foreground">Turn bonus bets, profit boosts, risk-free bets, and deposit matches into hedged profit, or see when a promo isn&apos;t worth it.</p><span className="mt-auto text-sm underline">Open converter</span></Link>
         {TOPICS.map(({ icon: Icon, title, body, id }) => (
           <Card key={title} id={id} className="gap-2 scroll-mt-20 p-5">
             <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">

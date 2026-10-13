@@ -1,6 +1,8 @@
 "use client";
 
 import { useBankroll } from "@/hooks/useBankroll";
+import { useBookTracker } from "@/hooks/useBookTracker";
+import { capStake } from "@/lib/book-tracker";
 import { recommendedStake } from "@/lib/kelly";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { EvOpportunity } from "@/lib/types";
@@ -13,11 +15,13 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
 /** Suggested quarter-Kelly stake for one opportunity, based on the user's device-local bankroll setting. */
 export function StakeSizer({ opportunity }: { opportunity: EvOpportunity }) {
   const { bankroll, setBankroll } = useBankroll();
-  const stake = recommendedStake(
+  const { books } = useBookTracker();
+  const kellyStake = recommendedStake(
     bankroll,
     opportunity.fairProbability,
     opportunity.oddsDecimal
   );
+  const stake = capStake(kellyStake, books.find((book) => book.slug === opportunity.sportsbook.slug));
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm">
@@ -45,6 +49,7 @@ export function StakeSizer({ opportunity }: { opportunity: EvOpportunity }) {
         <span className="font-medium tabular-nums">
           {stake > 0 ? CURRENCY_FORMATTER.format(stake) : "—"}
         </span>
+        {stake < kellyStake && <span className="text-xs text-amber-600 dark:text-amber-300">capped by book limit</span>}
       </div>
     </div>
   );

@@ -6,6 +6,12 @@ export function formatAmericanOdds(oddsDecimal: number): string {
   return american > 0 ? `+${american}` : `${american}`;
 }
 
+/** e.g. "player_prop" -> "Player prop" */
+export function formatMarketType(marketType: string): string {
+  const words = marketType.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /** e.g. 5.234 -> "+5.2%" */
 export function formatEvPercent(evPercent: number): string {
   const rounded = evPercent.toFixed(1);

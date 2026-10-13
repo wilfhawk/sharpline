@@ -29,6 +29,12 @@ export function Footer() {
           .
         </p>
         <nav className="flex shrink-0 flex-wrap gap-4">
+          <Link href="/promos" className="hover:text-foreground">
+            Promo Converter
+          </Link>
+          <Link href="/books" className="hover:text-foreground">
+            My Books
+          </Link>
           <Link href="/methodology" className="hover:text-foreground">
             Methodology
           </Link>

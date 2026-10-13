@@ -44,6 +44,9 @@ export interface OddsQuote {
   sportsbookId: string;
   oddsDecimalA: number;
   oddsDecimalB: number;
+  /** Sportsbook betslip/market page for each side, when the feed provides one. */
+  linkA?: string;
+  linkB?: string;
   timestamp: string; // ISO 8601
 }
 
@@ -65,6 +68,8 @@ export interface EvOpportunity {
   fairProbability: number;
   evPercent: number;
   snapshotTimestamp: string;
+  /** Where to place this bet: a feed deep link when available, else the sportsbook's site. */
+  betLink?: string;
 }
 
 /** All tracked books' current price for one exact market side, for the expanded row view. */
@@ -74,4 +79,5 @@ export interface BookComparisonRow {
   sideLabel: string;
   oddsDecimal: number;
   evPercent: number | null; // null when this book has no fair-odds reference (e.g. is Pinnacle itself)
+  betLink?: string;
 }

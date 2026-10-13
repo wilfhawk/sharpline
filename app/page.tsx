@@ -1,26 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/layout/Logo";
+import { LiveProof } from "@/components/marketing/LiveProof";
 import { ComparisonTable } from "@/components/marketing/ComparisonTable";
 import { RoiCalculator } from "@/components/marketing/RoiCalculator";
 import { PricingSection } from "@/components/marketing/PricingSection";
 import {
   ArrowRight,
   Clock,
+  Gift,
   LineChart,
   Radar,
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
-
-const PREVIEW_ROWS = [
-  { event: "Chiefs @ Bills", side: "Chiefs ML", book: "Caesars", odds: "+130", fair: "+122", ev: "+3.8%" },
-  { event: "Lakers @ Warriors", side: "Warriors ML", book: "FanDuel", odds: "+160", fair: "+153", ev: "+3.0%" },
-  { event: "Celtics @ Bucks", side: "Celtics ML", book: "Caesars", odds: "+170", fair: "+162", ev: "+2.9%" },
-];
 
 const FEATURES = [
   {
@@ -40,6 +36,24 @@ const FEATURES = [
     title: "Ranked by real edge",
     description:
       "Every price is scored against fair odds and sorted by EV%, so the best opportunities always float to the top.",
+  },
+  {
+    icon: Gift,
+    title: "Promo converter",
+    description:
+      "Turn bonus bets, profit boosts, risk-free bets, and deposit matches into hedged profit, or see when a promo isn't worth it.",
+  },
+  {
+    icon: Wallet,
+    title: "Books, limits, and promos",
+    description:
+      "Track balances, bet limits, and expiring promos per sportsbook. Suggested stakes respect each book's limit.",
+  },
+  {
+    icon: Radar,
+    title: "Player props and all games",
+    description:
+      "Browse every game and compare prices whether or not there is an edge, with player props scored against the market consensus.",
   },
 ];
 
@@ -123,45 +137,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-4xl px-4 pb-16 sm:px-6">
-        <Card className="overflow-hidden p-0">
-          <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-            <span className="text-sm font-medium">Live opportunities</span>
-            <Badge variant="outline" className="gap-1.5">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
-              </span>
-              Live
-            </Badge>
-          </div>
-          <div className="divide-y divide-border/60">
-            {PREVIEW_ROWS.map((row) => (
-              <div
-                key={row.event}
-                className="flex flex-col gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{row.event}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {row.side} · {row.book}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4 tabular-nums text-muted-foreground">
-                  <span>Odds {row.odds}</span>
-                  <span>Fair {row.fair}</span>
-                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-medium text-emerald-400">
-                    {row.ev}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          Sample preview — the dashboard is open to view without an account.
-        </p>
-      </section>
+      <LiveProof />
 
       <section className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 pb-16 text-sm text-muted-foreground sm:px-6">
         {RISK_REVERSAL.map(({ icon: Icon, text }) => (

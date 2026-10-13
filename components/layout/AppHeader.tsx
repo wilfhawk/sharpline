@@ -10,6 +10,8 @@ const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard", className: "hidden sm:inline" },
   { href: "/games", label: "All Games", className: "hidden sm:inline" },
   { href: "/learn", label: "Learn", className: "hidden sm:inline" },
+  { href: "/promos", label: "Promos", className: "hidden lg:inline" },
+  { href: "/books", label: "My Books", className: "hidden lg:inline" },
   { href: "/methodology", label: "Methodology", className: "hidden lg:inline" },
   { href: "/status", label: "Status", className: "hidden xl:inline" },
 ];

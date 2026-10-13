@@ -37,7 +37,7 @@ data; `proxy.ts` skips the Supabase session check entirely):
 | `NEXT_PUBLIC_STRIPE_PRICE_PLUS_MONTHLY` / `_ANNUAL` / `_PRO_MONTHLY` / `_PRO_ANNUAL` | The 4 Stripe Prices backing the Plus/Pro × monthly/annual checkout options (see below) |
 | `ODDS_PROVIDER` | Odds data source — `mock` (default) or `the-odds-api` (see below) |
 | `ODDS_API_KEY` / `ODDS_API_SPORTS` / `ODDS_API_REGIONS` / `ODDS_API_CACHE_SECONDS` | Live odds via [The Odds API](https://the-odds-api.com), only used when `ODDS_PROVIDER=the-odds-api` |
-| `ODDS_API_EXTRA_MARKETS` | Opt-in player-prop market keys added to the same bulk odds call (e.g. `player_pass_tds,player_points`); adds to per-refresh credit cost |
+| `ODDS_API_PROPS` | `true` enables player props, fetched per game (soonest `ODDS_API_PROPS_MAX_EVENTS` games per sport within `ODDS_API_PROPS_WINDOW_HOURS`, regions `ODDS_API_PROPS_REGIONS`, default `us`). Adds roughly 3 credits per game per refresh. Fair odds come from the average of the other books (needs 4+ books on the line) |
 | `ODDS_API_SHARP_BOOKS` | Priority-ordered sharp reference bookmaker keys (default `pinnacle`), e.g. `pinnacle,circasports,betonlineag` — the engine falls back to the next book in the list when a higher-priority one hasn't posted a line for a market |
 | `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | Email alerts (`app/api/cron/alerts`) via [Resend](https://resend.com); alerts silently no-op when unset |
 | `CRON_SECRET` | Protects `/api/cron/*` routes — Vercel sends it automatically as a Bearer token once set, see `vercel.json` |
@@ -46,7 +46,8 @@ data; `proxy.ts` skips the Supabase session check entirely):
 
 To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`,
 `0002_user_extensions.sql`, `0003_plus_tier_alerts_clv.sql`, and
-`0004_launch_hardening.sql` (in that order) against your project, then add `<your-domain>/api/auth/callback` as an
+`0004_launch_hardening.sql`, `0005_product_reliability.sql`, and
+`0006_bet_results.sql` (in that order) against your project, then add `<your-domain>/api/auth/callback` as an
 authorized redirect URI for the Google provider in your Supabase Auth
 settings (see `app/api/auth/callback/route.ts`).
 

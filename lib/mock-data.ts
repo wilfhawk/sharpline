@@ -409,6 +409,35 @@ function buildAltTotalQuotes(seed: EventSeed, marketId: string): OddsQuote[] {
   }));
 }
 
+/** Props have no sharp-book quote, so edges are measured against the other books' consensus. */
+interface PropSeed {
+  eventId: string;
+  key: string;
+  player: string;
+  stat: string;
+  line: number;
+  odds: Record<string, [over: number, under: number]>;
+}
+
+const PROP_SEEDS: PropSeed[] = [
+  {
+    eventId: "evt-lakers-warriors", key: "lebron-pts", player: "LeBron James", stat: "Points", line: 25.5,
+    odds: { "sb-draftkings": [-115, -105], "sb-fanduel": [-110, -110], "sb-betmgm": [-120, 100], "sb-caesars": [105, -135] },
+  },
+  {
+    eventId: "evt-celtics-bucks", key: "tatum-reb", player: "Jayson Tatum", stat: "Rebounds", line: 8.5,
+    odds: { "sb-draftkings": [-125, 100], "sb-fanduel": [-120, -102], "sb-betmgm": [-130, 105], "sb-caesars": [-105, -120] },
+  },
+  {
+    eventId: "evt-chiefs-bills", key: "mahomes-yds", player: "Patrick Mahomes", stat: "Passing Yards", line: 274.5,
+    odds: { "sb-draftkings": [-112, -108], "sb-fanduel": [-115, -105], "sb-betmgm": [-110, -110], "sb-caesars": [-108, -112] },
+  },
+  {
+    eventId: "evt-bruins-rangers", key: "pastrnak-sog", player: "David Pastrnak", stat: "Shots on Goal", line: 3.5,
+    odds: { "sb-draftkings": [-135, 110], "sb-fanduel": [-140, 114], "sb-betmgm": [-130, 105], "sb-caesars": [-105, -125] },
+  },
+];
+
 /** Builds a fresh mock odds data set with startTime/timestamp relative to "now". */
 export function buildMockOddsProviderData(): OddsProviderData {
   const events = buildEvents();
@@ -432,6 +461,28 @@ export function buildMockOddsProviderData(): OddsProviderData {
     if (altTotalMarket) {
       markets.push(altTotalMarket);
       quotes.push(...buildAltTotalQuotes(seed, altTotalMarket.id));
+    }
+  }
+
+  for (const prop of PROP_SEEDS) {
+    const event = eventById.get(prop.eventId)!;
+    const market: TwoWayMarket = {
+      id: `mkt-${prop.eventId}-prop-${prop.key}`,
+      event,
+      marketType: "player_prop",
+      lineValue: prop.line,
+      sideALabel: `${prop.player} Over ${prop.line} ${prop.stat}`,
+      sideBLabel: `${prop.player} Under ${prop.line} ${prop.stat}`,
+    };
+    markets.push(market);
+    for (const [sportsbookId, [over, under]] of Object.entries(prop.odds)) {
+      quotes.push({
+        marketId: market.id,
+        sportsbookId,
+        oddsDecimalA: americanToDecimal(over),
+        oddsDecimalB: americanToDecimal(under),
+        timestamp: jitteredRecentTimestamp(),
+      });
     }
   }
 

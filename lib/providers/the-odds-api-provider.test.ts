@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapTheOddsApiEvents, type RawOddsApiEvent } from "./the-odds-api-provider";
+import { mapTheOddsApiEvents, mergePropMarkets, type RawOddsApiEvent } from "./the-odds-api-provider";
 
 const NFL_EVENT: RawOddsApiEvent = {
   id: "evt-1",
@@ -224,5 +224,58 @@ describe("mapTheOddsApiEvents", () => {
     const data = mapTheOddsApiEvents([NFL_EVENT]);
     const pinnacle = data.sportsbooks.find((s) => s.slug === "pinnacle")!;
     expect(pinnacle.sharpPriority).toBe(0);
+  });
+});
+
+describe("betslip links and player-prop merging", () => {
+  const withLinks: RawOddsApiEvent = {
+    ...NFL_EVENT,
+    bookmakers: [
+      {
+        key: "draftkings",
+        title: "DraftKings",
+        link: "https://sportsbook.draftkings.com/event/1",
+        markets: [
+          {
+            key: "h2h",
+            link: "https://sportsbook.draftkings.com/market/1",
+            outcomes: [
+              { name: "Buffalo Bills", price: 1.8, link: "https://sportsbook.draftkings.com/slip/bills" },
+              { name: "Kansas City Chiefs", price: 2.1 },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  it("prefers outcome links, then market and bookmaker links", () => {
+    const quote = mapTheOddsApiEvents([withLinks]).quotes[0];
+    expect(quote.linkA).toBe("https://sportsbook.draftkings.com/slip/bills");
+    expect(quote.linkB).toBe("https://sportsbook.draftkings.com/market/1");
+  });
+
+  it("drops non-https and malformed links", () => {
+    const unsafe: RawOddsApiEvent = {
+      ...withLinks,
+      bookmakers: [{ ...withLinks.bookmakers[0], link: "javascript:alert(1)", markets: [{ key: "h2h", link: "http://insecure.example", outcomes: [{ name: "Buffalo Bills", price: 1.8, link: "not a url" }, { name: "Kansas City Chiefs", price: 2.1 }] }] }],
+    };
+    const quote = mapTheOddsApiEvents([unsafe]).quotes[0];
+    expect(quote.linkA).toBeUndefined();
+    expect(quote.linkB).toBeUndefined();
+  });
+
+  it("merges per-event prop markets into existing and new bookmakers", () => {
+    const event: RawOddsApiEvent = structuredClone(withLinks);
+    const propEvent: RawOddsApiEvent = {
+      ...withLinks,
+      bookmakers: [
+        { key: "draftkings", title: "DraftKings", markets: [{ key: "player_points", outcomes: [] }] },
+        { key: "fanduel", title: "FanDuel", markets: [{ key: "player_points", outcomes: [] }] },
+      ],
+    };
+    mergePropMarkets(event, propEvent);
+    expect(event.bookmakers.map((book) => book.key)).toEqual(["draftkings", "fanduel"]);
+    expect(event.bookmakers[0].markets.map((market) => market.key)).toEqual(["h2h", "player_points"]);
   });
 });

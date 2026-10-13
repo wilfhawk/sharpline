@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { OpportunityFilters } from "@/hooks/useOpportunities";
 import type { SubscriptionTier } from "@/lib/types";
+import { formatMarketType } from "@/lib/display";
 
 const EV_THRESHOLDS = [2, 3, 5, 10];
 
@@ -86,13 +87,13 @@ export function FilterBar({
         }
       >
         <SelectTrigger aria-label="Market type" className="w-36">
-          <SelectValue>{filters.marketType?.replace("_", " ") ?? "All markets"}</SelectValue>
+          <SelectValue>{filters.marketType ? formatMarketType(filters.marketType) : "All markets"}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All markets</SelectItem>
           {marketTypes.map((type) => (
-            <SelectItem key={type} value={type} className="capitalize">
-              {type}
+            <SelectItem key={type} value={type}>
+              {formatMarketType(type)}
             </SelectItem>
           ))}
         </SelectContent>

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LogBetValues } from "@/lib/validation/bets";
+import type { BetResult } from "@/lib/performance";
 
 export interface LoggedBet {
   id: string;
@@ -22,6 +23,9 @@ export interface LoggedBet {
   event_start_time: string | null;
   closing_line_status: "pending" | "captured" | "missed";
   closing_captured_at: string | null;
+  /** Absent until the result-tracking migration is applied. */
+  result?: BetResult | null;
+  settled_at?: string | null;
 }
 
 async function fetchBets(): Promise<LoggedBet[]> {
@@ -72,6 +76,25 @@ export function useCloseBet() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `Failed to close bet: ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bets"] }),
+  });
+}
+
+export function useSettleBet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, result }: { id: string; result: BetResult | null }) => {
+      const res = await fetch(`/api/bets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ result }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Failed to save result: ${res.status}`);
       }
       return res.json();
     },
