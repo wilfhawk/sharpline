@@ -33,9 +33,9 @@ export async function getRequestTier(): Promise<SubscriptionTier> {
 
 const VALID_TIERS: SubscriptionTier[] = ["free", "plus", "pro"];
 
-/** True only when explicitly enabled — keep this off for any URL shared publicly/with friends. */
+/** Tester mode: when on, anyone can preview any tier for free. Unset it to enforce real billing. */
 function isTierPreviewEnabled(): boolean {
-  return process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW === "true";
+  return process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW === "true";
 }
 
 /**

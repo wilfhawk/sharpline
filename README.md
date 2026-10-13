@@ -200,4 +200,7 @@ geofencing notes that should be resolved before a real launch.
   not licensed for a paid product (see `COMPLIANCE.md`).
 - [ ] Stripe live mode and processor approval (see `COMPLIANCE.md`).
 - [ ] Rotate any keys that were shared outside the team.
+- [ ] **Tester mode**: `NEXT_PUBLIC_ENABLE_TIER_PREVIEW=true` lets every visitor
+  switch between Free/Plus/Pro for free. Remove it in Vercel and redeploy
+  before charging real customers, or billing is bypassed.
 

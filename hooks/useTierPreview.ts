@@ -11,7 +11,7 @@ type TierPreview = SubscriptionTier | null;
 let cachedTier: TierPreview | undefined;
 
 function readStoredTier(): TierPreview {
-  if (process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW !== "true") return null;
+  if (process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW !== "true") return null;
   if (typeof window === "undefined") return null;
   const stored = window.localStorage.getItem(STORAGE_KEY);
   return stored === "free" || stored === "plus" || stored === "pro" ? stored : null;
@@ -41,7 +41,7 @@ export function useTierPreview() {
 }
 
 function getSnapshot(): TierPreview {
-  if (process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW !== "true") return null;
+  if (process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW !== "true") return null;
   if (cachedTier === undefined) cachedTier = readStoredTier();
   return cachedTier;
 }
