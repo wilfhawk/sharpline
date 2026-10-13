@@ -49,7 +49,7 @@ export function Dashboard() {
       {data?.meta.warnings.map((warning) => <p key={warning} role="status" className="text-sm text-amber-600 dark:text-amber-300">{warning}</p>)}
 
       <Tabs defaultValue="ev" className="gap-4">
-        <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4">
+        <TabsList className="grid h-auto w-full grid-cols-2 group-data-horizontal/tabs:h-auto sm:grid-cols-4">
           <TabsTrigger value="ev">+EV Opportunities</TabsTrigger>
           <TabsTrigger value="arbitrage">Arbitrage</TabsTrigger>
           <TabsTrigger value="middles">Middles</TabsTrigger>
