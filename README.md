@@ -182,3 +182,22 @@ are unit tested with ~99% coverage.
 See `COMPLIANCE.md` for payments-processor risk, data-licensing, and
 geofencing notes that should be resolved before a real launch.
 
+## Launch TODO
+
+- [ ] **Domain**: buy one, add it in Vercel (Settings, Domains), then update
+  Supabase Auth URL configuration (Site URL and redirects), the Stripe
+  webhook endpoint, the `@sharpline.app` emails in `/privacy` and `/terms`,
+  and the hardcoded host in `extension/manifest.json`.
+- [ ] **Verified Resend domain**: add the domain in Resend, publish its DKIM/SPF
+  records, then set `RESEND_FROM_EMAIL` to an address on it. The
+  `onboarding@resend.dev` sender only delivers to the Resend account owner.
+- [ ] **Cron frequency**: Hobby limits crons to once per day, so alerts run daily
+  and the closing-line capture runs daily at 00:00 UTC. For timely alerts
+  and near-kickoff CLV, upgrade to Vercel Pro and use `*/15 * * * *` for
+  alerts and `0 * * * *` for closing lines in `vercel.json`, or trigger
+  `/api/cron/*` from an external scheduler with the `CRON_SECRET` bearer token.
+- [ ] Odds data license and credit budget: free tier is 500 credits/month and
+  not licensed for a paid product (see `COMPLIANCE.md`).
+- [ ] Stripe live mode and processor approval (see `COMPLIANCE.md`).
+- [ ] Rotate any keys that were shared outside the team.
+
