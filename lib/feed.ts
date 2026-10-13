@@ -37,7 +37,11 @@ export async function readFeed(delayed = false): Promise<FeedSnapshot> {
       warnings: stored.warnings ?? [],
     };
   }
-  if (delayed) return { data: emptyData, capturedAt: cutoff, isMock: false, providerName: provider.name, warnings: ["Delayed feed is warming up. No historical snapshot is available yet."] };
+  if (delayed) {
+    // Seed a snapshot so the delayed feed has history within 15 minutes, without exposing live data.
+    await readFeed(false).catch(() => undefined);
+    return { data: emptyData, capturedAt: cutoff, isMock: false, providerName: provider.name, warnings: ["Delayed feed is warming up. No historical snapshot is available yet."] };
+  }
   const raw = await provider.fetchData();
   const data = usableFeed(raw, now);
   const warnings = raw.warnings ?? [];
