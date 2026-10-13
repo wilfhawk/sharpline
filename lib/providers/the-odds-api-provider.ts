@@ -394,7 +394,7 @@ export class TheOddsApiProvider implements OddsProvider {
 
     const response = await fetch(url.toString(), {
       signal: AbortSignal.timeout(10_000),
-      next: { revalidate: this.config.cacheSeconds },
+      cache: "no-store",
     });
     if (!response.ok) throw new Error(`Props request failed for "${sportKey}": ${response.status}`);
     console.info("odds_quota", { sport: sportKey, kind: "props", remaining: response.headers.get("x-requests-remaining"), last: response.headers.get("x-requests-last") });
@@ -414,7 +414,7 @@ export class TheOddsApiProvider implements OddsProvider {
 
     const response = await fetch(url.toString(), {
       signal: AbortSignal.timeout(10_000),
-      next: { revalidate: this.config.cacheSeconds },
+      cache: "no-store",
     });
 
     if (!response.ok) {

@@ -24,8 +24,8 @@ export interface OddsProvider {
  * add a new OddsProvider implementation for other sources without touching callers.
  */
 export function getOddsCacheSeconds(): number {
-  const seconds = Number(process.env.ODDS_API_CACHE_SECONDS ?? 60);
-  return Number.isFinite(seconds) && seconds >= 30 ? seconds : 60;
+  const seconds = Number(process.env.ODDS_API_CACHE_SECONDS ?? 172_800);
+  return Number.isFinite(seconds) && seconds >= 30 ? seconds : 172_800;
 }
 
 function positiveInt(value: string | undefined, fallback: number): number {

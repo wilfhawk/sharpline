@@ -87,10 +87,12 @@ settings (see `app/api/auth/callback/route.ts`).
    and `ODDS_API_REGIONS`
    (default `us,eu` — `eu` is required to get Pinnacle, the sharp reference
    book the EV engine devigs against).
-4. `ODDS_API_CACHE_SECONDS` (default 3600) controls how long Next.js caches
-   each upstream request. The dashboard polls the app's own `/api/opportunities`
+4. `ODDS_API_CACHE_SECONDS` (default 172800, i.e. 2 days) controls how long a
+   saved odds snapshot is reused before The Odds API is called again. The
+   dashboard polls the app's own `/api/opportunities`
    every 20s regardless of provider, but that only re-hits The Odds API once
-   the cache window expires.
+   the cache window expires. To force a refresh, delete the rows in the
+   `feed_snapshots` table.
 5. Markets with no quote from any configured sharp reference book are
    silently skipped (no fair-odds benchmark to devig against) — this is
    expected, not a bug. Add more sharp books as a fallback chain via
@@ -105,7 +107,7 @@ settings (see `app/api/auth/callback/route.ts`).
 **Free-tier budget (500 credits/month):** cost per refresh is
 `[sports] x [markets=3] x [regions]`. With the default 5 sports and 2 regions
 (`us,eu`), that's 30 credits per refresh — about 16 refreshes/month. The
-default `ODDS_API_CACHE_SECONDS=3600` (1hr) keeps a testing session well
+default `ODDS_API_CACHE_SECONDS=172800` (2 days) keeps a testing session well
 within quota; repeated dashboard reloads inside that hour are served from
 cache for free. Track fewer sports or drop a region to fit more refreshes in
 the same budget (dropping `eu` disables the EV engine's Pinnacle benchmark,

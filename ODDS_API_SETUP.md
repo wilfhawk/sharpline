@@ -18,13 +18,13 @@ ODDS_PROVIDER=the-odds-api
 ODDS_API_KEY=<paste your key here>
 ODDS_API_SPORTS=americanfootball_nfl,basketball_nba,baseball_mlb,icehockey_nhl,americanfootball_ncaaf
 ODDS_API_REGIONS=us,eu
-ODDS_API_CACHE_SECONDS=3600
+ODDS_API_CACHE_SECONDS=172800
 ```
 
 - `us,eu` for regions is required — `eu` is what gets you Pinnacle, the sharp
   book the EV engine de-vigs against. Don't drop it.
-- `ODDS_API_CACHE_SECONDS=3600` (1hr) keeps free-tier testing well inside the
-  500/month budget (~12 credits per refresh, ~41 refreshes/month available).
+- `ODDS_API_CACHE_SECONDS=172800` (2 days) refreshes odds at most every 2 days, which keeps the
+  500/month free budget safe. Delete the `feed_snapshots` rows to force a refresh.
 - Restart `npm run dev` after editing `.env.local` so Next.js picks it up.
 
 ## 3. Set it on Vercel (production)
