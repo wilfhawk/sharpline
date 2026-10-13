@@ -2,9 +2,12 @@
 
 import { useTierPreview } from "@/hooks/useTierPreview";
 
-/** Public "preview as Free / Plus / Pro" segmented toggle — no login required, device-local only. */
+const PREVIEW_ENABLED = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW === "true";
+
+/** Owner-only "preview as Free / Plus / Pro" toggle for testing — hidden unless NEXT_PUBLIC_ENABLE_TIER_PREVIEW=true. */
 export function TierToggle() {
   const { tierPreview, setTierPreview } = useTierPreview();
+  if (!PREVIEW_ENABLED) return null;
   const active = tierPreview ?? "free";
 
   return (

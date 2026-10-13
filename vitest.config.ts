@@ -10,13 +10,15 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "jsdom",
+    environment: "node",
     pool: "vmThreads",
     maxWorkers: 1,
+    exclude: ["**/node_modules/**", "**/.git/**", "tests/e2e/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["lib/**/*.ts"],
+      include: ["lib/{ev-engine,odds-utils,opportunities,subscription,arbitrage,middles,sgp,kelly,clv,alerts,earnings,feed-quality,auth-redirect,game-catalog}.ts"],
+      thresholds: { lines: 80, statements: 80, functions: 80, branches: 80 },
       exclude: ["lib/**/*.test.ts", "lib/supabase/**", "lib/stripe.ts"],
     },
   },

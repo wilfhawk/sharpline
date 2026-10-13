@@ -1,7 +1,11 @@
+import { AppHeader } from "@/components/layout/AppHeader";
+
 export const metadata = { title: "Methodology — SharpLine" };
 
 export default function MethodologyPage() {
   return (
+    <>
+    <AppHeader />
     <article className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-12 text-sm leading-relaxed text-muted-foreground sm:px-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Methodology</h1>
@@ -113,5 +117,6 @@ fairProbabilityB = rawB^k`}
         </p>
       </section>
     </article>
+    </>
   );
 }

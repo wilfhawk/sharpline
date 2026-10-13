@@ -53,6 +53,7 @@ export async function PATCH(
       closing_fair_probability: parsed.data.closingFairProbability,
       clv_percent: clvPercent,
       closed_at: new Date().toISOString(),
+      closing_line_status: "captured",
     })
     .eq("id", id)
     .select("*")

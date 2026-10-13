@@ -254,7 +254,7 @@ export function mapTheOddsApiEvents(
             oddsDecimalA: result.sideAOutcome.price,
             oddsDecimalB: result.sideBOutcome.price,
             timestamp:
-              rawMarket.last_update ?? bookmaker.last_update ?? new Date().toISOString(),
+              rawMarket.last_update ?? bookmaker.last_update ?? new Date(0).toISOString(),
           });
         }
       }
@@ -290,10 +290,17 @@ export class TheOddsApiProvider implements OddsProvider {
   constructor(private readonly config: TheOddsApiConfig) {}
 
   async fetchData(): Promise<OddsProviderData> {
-    const perSport = await Promise.all(
+    const perSport = await Promise.allSettled(
       this.config.sportKeys.map((sportKey) => this.fetchSportEvents(sportKey))
     );
-    return mapTheOddsApiEvents(perSport.flat(), this.config.sharpBookKeys);
+    const events: RawOddsApiEvent[] = [];
+    const warnings: string[] = [];
+    perSport.forEach((result, index) => {
+      if (result.status === "fulfilled") events.push(...result.value);
+      else warnings.push(`Unavailable sport: ${this.config.sportKeys[index]}`);
+    });
+    if (perSport.every((result) => result.status === "rejected")) throw new Error("All sports feeds are unavailable.");
+    return { ...mapTheOddsApiEvents(events, this.config.sharpBookKeys), warnings };
   }
 
   private async fetchSportEvents(sportKey: string): Promise<RawOddsApiEvent[]> {
@@ -305,6 +312,7 @@ export class TheOddsApiProvider implements OddsProvider {
     url.searchParams.set("dateFormat", "iso");
 
     const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(10_000),
       next: { revalidate: this.config.cacheSeconds },
     });
 
@@ -314,6 +322,9 @@ export class TheOddsApiProvider implements OddsProvider {
       );
     }
 
-    return response.json();
+    console.info("odds_quota", { sport: sportKey, remaining: response.headers.get("x-requests-remaining"), used: response.headers.get("x-requests-used") });
+    const data: unknown = await response.json();
+    if (!Array.isArray(data)) throw new Error("Invalid odds response.");
+    return data;
   }
 }

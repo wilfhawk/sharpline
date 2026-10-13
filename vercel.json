@@ -1,6 +1,7 @@
 {
   "crons": [
-    { "path": "/api/cron/alerts", "schedule": "0 15 * * *" },
-    { "path": "/api/cron/capture-closing-lines", "schedule": "0 0 * * *" }
+    { "path": "/api/cron/ingest", "schedule": "* * * * *" },
+    { "path": "/api/cron/alerts", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/capture-closing-lines", "schedule": "*/5 * * * *" }
   ]
 }

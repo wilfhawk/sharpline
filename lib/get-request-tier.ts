@@ -13,7 +13,7 @@ import type { SubscriptionTier } from "@/lib/types";
  * configured, or "pro" when it isn't (local/mock dev with no credentials).
  */
 export async function getRequestTier(): Promise<SubscriptionTier> {
-  if (!isSupabaseConfigured()) return "pro";
+  if (!isSupabaseConfigured()) return process.env.NODE_ENV === "production" ? "free" : "pro";
 
   const supabase = await createClient();
   const {
@@ -33,16 +33,26 @@ export async function getRequestTier(): Promise<SubscriptionTier> {
 
 const VALID_TIERS: SubscriptionTier[] = ["free", "plus", "pro"];
 
+/** True only when explicitly enabled — keep this off for any URL shared publicly/with friends. */
+function isTierPreviewEnabled(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENABLE_TIER_PREVIEW === "true";
+}
+
 /**
- * Same as getRequestTier(), but honors the public "preview as Free/Plus/Pro"
- * toggle (see hooks/useTierPreview.ts) via an explicit `?tier=` query param
- * when present — an intentional, visible, no-login demo control, not a real
- * entitlement check. Used by every tier-gated API route for consistency.
+ * Same as getRequestTier(), but honors the "preview as Free/Plus/Pro" toggle
+ * (see hooks/useTierPreview.ts) via an explicit `?tier=` query param when
+ * present — an intentional, visible, no-login demo control for YOUR OWN
+ * testing, not a real entitlement check. Gated behind
+ * `NEXT_PUBLIC_ENABLE_TIER_PREVIEW` so it can't be used to bypass billing on
+ * a deployment you've shared with others (e.g. friends reviewing the site).
+ * Used by every tier-gated API route for consistency.
  */
 export async function getRequestTierWithOverride(request: NextRequest): Promise<SubscriptionTier> {
-  const override = request.nextUrl.searchParams.get("tier");
-  if (override && (VALID_TIERS as string[]).includes(override)) {
-    return override as SubscriptionTier;
+  if (isTierPreviewEnabled()) {
+    const override = request.nextUrl.searchParams.get("tier");
+    if (override && (VALID_TIERS as string[]).includes(override)) {
+      return override as SubscriptionTier;
+    }
   }
   return getRequestTier();
 }

@@ -44,10 +44,15 @@ export function SgpBuilder({ opportunities }: { opportunities: EvOpportunity[] }
 
   const [eventId, setEventId] = useState<string | undefined>(undefined);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [correlationFactor, setCorrelationFactor] = useState(1.2);
+  const [correlationFactor, setCorrelationFactor] = useState(1);
+  const [bookId, setBookId] = useState("");
+  const [quotedOdds, setQuotedOdds] = useState("");
 
   const activeEventId = eventId ?? eventOptions[0]?.id;
-  const eventLegs = opportunities.filter((o) => o.event.id === activeEventId);
+  const available = opportunities.filter((opportunity) => opportunity.event.id === activeEventId);
+  const books = [...new Map(available.map((opportunity) => [opportunity.sportsbook.id, opportunity.sportsbook])).values()];
+  const activeBookId = books.some((book) => book.id === bookId) ? bookId : books[0]?.id;
+  const eventLegs = available.filter((opportunity) => opportunity.sportsbook.id === activeBookId);
   const selectedLegs = eventLegs.filter((o) => selectedIds.includes(o.id));
 
   function toggleLeg(leg: EvOpportunity) {
@@ -63,15 +68,17 @@ export function SgpBuilder({ opportunities }: { opportunities: EvOpportunity[] }
   }
 
   const result =
-    selectedLegs.length >= 1
+    selectedLegs.length >= 2 && Number.isFinite(Number(quotedOdds)) && Number(quotedOdds) > 1
       ? computeSgpEv(
           selectedLegs.map((l) => ({
             id: l.id,
             label: l.sideLabel,
             oddsDecimal: l.oddsDecimal,
             fairProbability: l.fairProbability,
+            sportsbookId: l.sportsbook.id,
           })),
-          correlationFactor
+          correlationFactor,
+          Number(quotedOdds)
         )
       : null;
 
@@ -92,10 +99,11 @@ export function SgpBuilder({ opportunities }: { opportunities: EvOpportunity[] }
           onValueChange={(value) => {
             setEventId(value ?? undefined);
             setSelectedIds([]);
+            setQuotedOdds("");
           }}
         >
-          <SelectTrigger className="w-64">
-            <SelectValue placeholder="Event" />
+          <SelectTrigger aria-label="Parlay event" className="w-full sm:w-64">
+            <SelectValue>{eventOptions.find((event) => event.id === activeEventId)?.label ?? "Event"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {eventOptions.map((e) => (
@@ -105,6 +113,8 @@ export function SgpBuilder({ opportunities }: { opportunities: EvOpportunity[] }
             ))}
           </SelectContent>
         </Select>
+        <select aria-label="Parlay sportsbook" className="h-9 max-w-full rounded-md border bg-background px-3 text-sm" value={activeBookId} onChange={(event) => { setBookId(event.target.value); setSelectedIds([]); setQuotedOdds(""); }}>{books.map((book) => <option key={book.id} value={book.id}>{book.name}</option>)}</select>
+        <label className="flex flex-wrap items-center gap-2 text-sm">Quoted parlay decimal odds<Input type="number" min="1.01" step="0.01" placeholder="e.g. 3.80" className="w-28" value={quotedOdds} onChange={(event) => setQuotedOdds(event.target.value)} /></label>
 
         <div className="flex items-center gap-2">
           <Label htmlFor="sgp-correlation" className="text-sm text-muted-foreground">
@@ -150,7 +160,7 @@ export function SgpBuilder({ opportunities }: { opportunities: EvOpportunity[] }
         <Card className="gap-2 p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              {selectedLegs.length}-leg parlay · combined odds
+              {selectedLegs.length}-leg parlay · sportsbook quote
             </span>
             <span className="font-medium tabular-nums">
               {formatAmericanOdds(result.combinedOddsDecimal)}

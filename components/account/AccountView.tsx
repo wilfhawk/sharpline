@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 import type { SubscriptionTier } from "@/lib/types";
+import { EmailPreferences } from "./EmailPreferences";
 
 const TIER_LABEL: Record<SubscriptionTier, string> = {
   free: "Free",
@@ -25,9 +29,24 @@ export function AccountView({
   email: string;
   tier: SubscriptionTier;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [interval, setInterval] = useState<"month" | "year">("month");
+
+  useEffect(() => {
+    const checkout = searchParams.get("checkout");
+    if (checkout === "success") {
+      toast.success("Checkout complete — your plan will update shortly.");
+    } else if (checkout === "cancelled") {
+      toast("Checkout cancelled — your plan wasn't changed.");
+    }
+    // Only meant to fire once per redirect back from Stripe, not on every
+    // render/param change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function goToCheckout(targetTier: "plus" | "pro") {
     setIsLoading(true);
@@ -57,6 +76,13 @@ export function AccountView({
       return;
     }
     window.location.href = body.url;
+  }
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    await createClient().auth.signOut();
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -125,13 +151,18 @@ export function AccountView({
           <CardTitle>Alert settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {tier === "free"
-              ? "Email alerts for your saved filters are available on Plus and Pro."
-              : "Manage which saved filters trigger an email alert from the Dashboard's Alert settings panel."}
-          </p>
+          <EmailPreferences tier={tier} />
         </CardContent>
       </Card>
+
+      <Button
+        variant="outline"
+        onClick={handleSignOut}
+        disabled={isSigningOut}
+        className="w-fit"
+      >
+        {isSigningOut ? "Signing out..." : "Sign out"}
+      </Button>
     </div>
   );
 }

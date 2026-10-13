@@ -19,7 +19,7 @@ export function AlertSettings() {
         onClick={() => setSettings({ ...settings, enabled: !settings.enabled })}
       >
         <BellIcon className="size-3.5" />
-        {settings.enabled ? "Alerts on" : "Alerts off"}
+        {settings.enabled ? "Browser alerts on" : "Browser alerts off"}
       </Button>
       {settings.enabled && (
         <div className="flex items-center gap-1 text-muted-foreground">

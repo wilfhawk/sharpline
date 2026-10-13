@@ -6,8 +6,8 @@ export function FreeTierBanner() {
       <Lock className="size-4 shrink-0" />
       <p>
         Viewing the <span className="font-medium">free tier</span> — odds are
-        15 minutes delayed and capped at 3 opportunities/day. Select Pro in the
-        header to preview the full feed.
+        at least 15 minutes delayed. The same three daily sample offers are
+        shared across all filters. They are not current betting prices.
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getOddsProvider } from "@/lib/odds-provider";
+import { readFeed } from "@/lib/feed";
 import { computeAllOpportunities } from "@/lib/opportunities";
 import { computeArbitrageOpportunities } from "@/lib/arbitrage";
 import { computeMiddleOpportunities } from "@/lib/middles";
@@ -23,11 +23,15 @@ export const maxDuration = 60;
 
 const COOLDOWN_MS = 30 * 60 * 1000;
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
+}
+
 function renderDigestHtml(candidates: AlertCandidate[]): string {
   const rows = candidates
     .map(
       (c) =>
-        `<li><strong>${c.eventLabel}</strong> — ${c.sideLabel} (${c.sportsbookSlug}) — ${
+        `<li><strong>${escapeHtml(c.eventLabel)}</strong> — ${escapeHtml(c.sideLabel)} (${escapeHtml(c.sportsbookSlug)}) — ${
           c.evPercent !== null ? formatEvPercent(c.evPercent) : "—"
         } [${c.opportunityType}]</li>`
     )
@@ -64,20 +68,24 @@ export async function GET(request: NextRequest) {
 
   const userIds = users.map((u) => u.id);
 
-  const { data: savedFilters } = await admin
+  const { data: preferences, error: preferencesError } = await admin.from("alert_preferences").select("*").in("user_id", userIds).eq("email_enabled", true);
+  if (preferencesError) return NextResponse.json({ error: "Alert preferences unavailable." }, { status: 503 });
+  const { data: savedFilters, error: filtersError } = await admin
     .from("saved_filters")
     .select("id, user_id, filters")
     .in("user_id", userIds);
 
   const cutoffIso = new Date(Date.now() - COOLDOWN_MS).toISOString();
-  const { data: recentAlerts } = await admin
+  const { data: recentAlerts, error: recentError } = await admin
     .from("alert_log")
     .select("user_id, market_id, sportsbook_slug, side, sent_at")
     .in("user_id", userIds)
     .gte("sent_at", cutoffIso);
 
-  const provider = getOddsProvider();
-  const data = await provider.fetchData();
+  if (filtersError || recentError) return NextResponse.json({ error: "Alert history unavailable." }, { status: 503 });
+  const feed = await readFeed();
+  if (feed.isMock) return NextResponse.json({ checked: 0, usersAlerted: 0, alertsSent: 0, skipped: "mock" });
+  const data = feed.data;
   const evOpportunities = computeAllOpportunities(data);
   const arbitrageOpportunities = computeArbitrageOpportunities(data);
   const middleOpportunities = computeMiddleOpportunities(data);
@@ -87,16 +95,24 @@ export async function GET(request: NextRequest) {
 
   for (const user of users) {
     if (!canReceiveAlerts(user.subscription_tier)) continue;
+    const preference = preferences?.find((item) => item.user_id === user.id);
+    if (!preference) continue;
 
     const filterSets: OpportunityFilters[] = (savedFilters ?? [])
       .filter((f) => f.user_id === user.id)
       .map((f) => f.filters as OpportunityFilters);
 
-    let candidates = buildEvAlertCandidates(evOpportunities, filterSets);
+    const modelOpportunities = hasProFeatures(user.subscription_tier) && filterSets.some((filters) => filters.devigMethod === "power")
+      ? computeAllOpportunities(data, "power") : evOpportunities;
+    let candidates = preference.ev_enabled ? filterSets.flatMap((filters) => buildEvAlertCandidates(
+      filters.devigMethod === "power" && hasProFeatures(user.subscription_tier) ? modelOpportunities : evOpportunities,
+      [filters]
+    )).filter((candidate) => (candidate.evPercent ?? 0) >= preference.threshold_percent) : [];
+    candidates = [...new Map(candidates.map((candidate) => [`${candidate.marketId}:${candidate.sportsbookSlug}:${candidate.side}`, candidate])).values()];
     if (hasProFeatures(user.subscription_tier)) {
       candidates = candidates.concat(
-        buildArbitrageAlertCandidates(arbitrageOpportunities),
-        buildMiddleAlertCandidates(middleOpportunities)
+        preference.arbitrage_enabled ? buildArbitrageAlertCandidates(arbitrageOpportunities) : [],
+        preference.middles_enabled ? buildMiddleAlertCandidates(middleOpportunities) : []
       );
     }
     if (candidates.length === 0) continue;
@@ -110,16 +126,26 @@ export async function GET(request: NextRequest) {
         sentAt: a.sent_at,
       }));
 
-    const newCandidates = filterNewAlertCandidates(candidates, userRecentAlerts, Date.now(), COOLDOWN_MS);
+    let newCandidates = filterNewAlertCandidates(candidates, userRecentAlerts, Date.now(), COOLDOWN_MS);
     if (newCandidates.length === 0) continue;
 
     if (!user.email) continue;
 
-    const emailSent = await sendEmail({
-      to: user.email,
-      subject: `SharpLine: ${newCandidates.length} new opportunit${newCandidates.length === 1 ? "y" : "ies"}`,
-      html: renderDigestHtml(newCandidates),
-    });
+    const deliveryKey = `${user.id}:${Math.floor(Date.now() / COOLDOWN_MS)}`;
+    const unsubscribePage = `${request.nextUrl.origin}/unsubscribe?token=${preference.unsubscribe_token}`;
+    const unsubscribeUrl = `${request.nextUrl.origin}/api/alerts/unsubscribe?token=${preference.unsubscribe_token}`;
+    const { error: deliveryError } = await admin.from("alert_deliveries").upsert({
+      delivery_key: deliveryKey, user_id: user.id, recipient: user.email,
+      subject: `SharpLine: ${newCandidates.length} new opportunities`,
+      html: `${renderDigestHtml(newCandidates)}<p><a href="${escapeHtml(unsubscribePage)}">Unsubscribe</a></p>`,
+      candidates: newCandidates, unsubscribe_url: unsubscribeUrl,
+    }, { onConflict: "delivery_key", ignoreDuplicates: true });
+    if (deliveryError) return NextResponse.json({ error: "Could not queue alerts." }, { status: 503 });
+    const { data: delivery, error: queuedError } = await admin.from("alert_deliveries").select("*").eq("delivery_key", deliveryKey).single();
+    if (queuedError || !delivery) return NextResponse.json({ error: "Queued alert unavailable." }, { status: 503 });
+    if (delivery.sent_at) continue;
+    newCandidates = delivery.candidates as AlertCandidate[];
+    const emailSent = await sendEmail({ to: delivery.recipient, subject: delivery.subject, html: delivery.html, idempotencyKey: deliveryKey, unsubscribeUrl: delivery.unsubscribe_url });
     if (!emailSent) continue;
 
     const { error: alertLogError } = await admin.from("alert_log").insert(
@@ -138,6 +164,8 @@ export async function GET(request: NextRequest) {
     }
 
     usersAlerted += 1;
+    const { error: sentError } = await admin.from("alert_deliveries").update({ sent_at: new Date().toISOString() }).eq("delivery_key", deliveryKey);
+    if (sentError) return NextResponse.json({ error: "Delivery confirmation failed." }, { status: 503 });
     alertsSent += newCandidates.length;
   }
 

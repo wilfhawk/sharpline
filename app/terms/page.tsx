@@ -1,7 +1,11 @@
+import { AppHeader } from "@/components/layout/AppHeader";
+
 export const metadata = { title: "Terms of Service — SharpLine" };
 
 export default function TermsPage() {
   return (
+    <>
+    <AppHeader />
     <article className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-12 text-sm leading-relaxed text-muted-foreground sm:px-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Terms of Service</h1>
@@ -104,5 +108,6 @@ export default function TermsPage() {
         <p>Questions about these Terms can be sent to support@sharpline.app.</p>
       </section>
     </article>
+    </>
   );
 }

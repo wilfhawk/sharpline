@@ -1,9 +1,12 @@
 import { CHANGELOG } from "@/lib/changelog";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 export const metadata = { title: "Changelog — SharpLine" };
 
 export default function ChangelogPage() {
   return (
+    <>
+    <AppHeader />
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-12 sm:px-6">
       <div>
         <h1 className="text-2xl font-semibold">Changelog</h1>
@@ -33,5 +36,6 @@ export default function ChangelogPage() {
         ))}
       </div>
     </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@ export interface SgpLegInput {
   label: string;
   oddsDecimal: number;
   fairProbability: number;
+  sportsbookId?: string;
 }
 
 export interface SgpResult {
@@ -32,22 +33,25 @@ export function computeParlayOdds(legs: { oddsDecimal: number }[]): number {
  * > 1 (an estimate, not derived from historical data) to approximate that.
  * Pass 1 to fall back to a pure independence assumption.
  */
-export function computeSgpEv(legs: SgpLegInput[], correlationFactor = 1): SgpResult {
-  if (legs.length === 0) {
-    throw new Error("At least one leg is required to compute a parlay EV.");
+export function computeSgpEv(legs: SgpLegInput[], correlationFactor: number, quotedOddsDecimal: number): SgpResult {
+  if (legs.length < 2) {
+    throw new Error("At least two legs are required to compute a parlay EV.");
   }
-  if (correlationFactor <= 0) {
+  if (!Number.isFinite(correlationFactor) || correlationFactor <= 0) {
     throw new Error("correlationFactor must be > 0.");
   }
+  if (!Number.isFinite(quotedOddsDecimal) || quotedOddsDecimal <= 1) throw new Error("Enter the sportsbook's quoted parlay odds.");
+  if (new Set(legs.map((leg) => leg.sportsbookId)).size > 1) throw new Error("Parlay legs must use the same sportsbook.");
+  if (legs.some((leg) => !Number.isFinite(leg.fairProbability) || leg.fairProbability <= 0 || leg.fairProbability >= 1)) throw new Error("Invalid leg probability.");
 
-  const combinedOddsDecimal = computeParlayOdds(legs);
+  const combinedOddsDecimal = quotedOddsDecimal;
   const independenceFairProbability = legs.reduce(
     (acc, leg) => acc * leg.fairProbability,
     1
   );
   const minLegProbability = Math.min(...legs.map((leg) => leg.fairProbability));
   const adjustedFairProbability = Math.min(
-    independenceFairProbability * correlationFactor,
+    Math.max(independenceFairProbability * correlationFactor, Math.max(0, legs.reduce((sum, leg) => sum + leg.fairProbability, 0) - (legs.length - 1))),
     minLegProbability
   );
   const evPercent = (adjustedFairProbability * combinedOddsDecimal - 1) * 100;

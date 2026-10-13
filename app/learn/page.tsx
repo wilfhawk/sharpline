@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { AppHeader } from "@/components/layout/AppHeader";
 import {
   BookOpen,
   Calculator,
@@ -50,7 +51,9 @@ const TOPICS = [
 
 export default function LearnPage() {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10 sm:px-6">
+    <>
+      <AppHeader />
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10 sm:px-6">
       <div className="flex flex-col gap-2">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium">
           <BookOpen className="size-3.5" />
@@ -67,6 +70,7 @@ export default function LearnPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <Link href="/learn/earnings" className="flex flex-col gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-5"><Calculator className="size-5 text-emerald-500" /><h2 className="font-medium">Earnings & Risk Calculator</h2><p className="text-sm text-muted-foreground">Explore hypothetical net returns, costs, and the chance of losing money across a range of assumptions.</p><span className="mt-auto text-sm underline">Open calculator</span></Link>
         {TOPICS.map(({ icon: Icon, title, body, id }) => (
           <Card key={title} id={id} className="gap-2 scroll-mt-20 p-5">
             <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -97,6 +101,7 @@ export default function LearnPage() {
         </Link>{" "}
         resources.
       </p>
-    </div>
+      </div>
+    </>
   );
 }

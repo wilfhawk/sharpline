@@ -51,6 +51,9 @@ export type MarketSide = "A" | "B";
 
 /** A ranked +EV opportunity: one book, one side, one market, compared to Pinnacle fair odds. */
 export interface EvOpportunity {
+  referenceBook?: string;
+  referenceTimestamp?: string;
+  devigMethod?: DevigMethod;
   id: string;
   event: EventSummary;
   market: TwoWayMarket;

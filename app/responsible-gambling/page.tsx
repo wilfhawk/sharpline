@@ -1,7 +1,11 @@
+import { AppHeader } from "@/components/layout/AppHeader";
+
 export const metadata = { title: "Responsible Gambling — SharpLine" };
 
 export default function ResponsibleGamblingPage() {
   return (
+    <>
+    <AppHeader />
     <article className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-12 text-sm leading-relaxed text-muted-foreground sm:px-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">
@@ -70,5 +74,6 @@ export default function ResponsibleGamblingPage() {
         </p>
       </section>
     </article>
+    </>
   );
 }

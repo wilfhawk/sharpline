@@ -3,6 +3,7 @@ import { MockOddsProvider } from "./providers/mock-provider";
 import { TheOddsApiProvider } from "./providers/the-odds-api-provider";
 
 export interface OddsProviderData {
+  warnings?: string[];
   sportsbooks: Sportsbook[];
   events: EventSummary[];
   markets: TwoWayMarket[];
@@ -22,6 +23,11 @@ export interface OddsProvider {
  * "mock" (default) and "the-odds-api" (https://the-odds-api.com) are implemented;
  * add a new OddsProvider implementation for other sources without touching callers.
  */
+export function getOddsCacheSeconds(): number {
+  const seconds = Number(process.env.ODDS_API_CACHE_SECONDS ?? 60);
+  return Number.isFinite(seconds) && seconds >= 30 ? seconds : 60;
+}
+
 export function getOddsProvider(): OddsProvider {
   const providerName = process.env.ODDS_PROVIDER ?? "mock";
 
@@ -37,13 +43,16 @@ export function getOddsProvider(): OddsProvider {
       }
       return new TheOddsApiProvider({
         apiKey,
-        sportKeys: (process.env.ODDS_API_SPORTS ?? "americanfootball_nfl,basketball_nba")
+        sportKeys: (
+          process.env.ODDS_API_SPORTS ??
+          "americanfootball_nfl,basketball_nba,baseball_mlb,icehockey_nhl,americanfootball_ncaaf"
+        )
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
         regions: process.env.ODDS_API_REGIONS ?? "us,eu",
         baseUrl: process.env.ODDS_API_BASE_URL ?? "https://api.the-odds-api.com/v4",
-        cacheSeconds: Number(process.env.ODDS_API_CACHE_SECONDS ?? 60),
+        cacheSeconds: getOddsCacheSeconds(),
         extraMarkets: (process.env.ODDS_API_EXTRA_MARKETS ?? "")
           .split(",")
           .map((s) => s.trim())

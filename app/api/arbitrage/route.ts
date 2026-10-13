@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getOddsProvider } from "@/lib/odds-provider";
+import { readFeed } from "@/lib/feed";
 import { computeArbitrageOpportunities } from "@/lib/arbitrage";
 import { getRequestTierWithOverride } from "@/lib/get-request-tier";
 import { hasProFeatures } from "@/lib/subscription";
@@ -18,15 +18,15 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const provider = getOddsProvider();
-  const data = await provider.fetchData();
+  const feed = await readFeed();
+  const data = feed.data;
   const opportunities = computeArbitrageOpportunities(data);
 
   return NextResponse.json({
     opportunities,
     meta: {
-      isMock: provider.isMock,
-      providerName: provider.name,
+      isMock: feed.isMock,
+      providerName: feed.providerName,
       generatedAt: new Date().toISOString(),
       gated: false,
     },

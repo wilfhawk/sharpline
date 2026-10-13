@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getOddsProvider } from "@/lib/odds-provider";
+import { readFeed } from "@/lib/feed";
+import { getRequestTierWithOverride } from "@/lib/get-request-tier";
 import { buildBookComparisonRows } from "@/lib/opportunities";
 import { enforcePublicRateLimit } from "@/lib/api-rate-limit";
 
@@ -9,11 +10,13 @@ export async function GET(
 ) {
   const rateLimitResponse = await enforcePublicRateLimit(request, "market-comparison", 60);
   if (rateLimitResponse) return rateLimitResponse;
+  const tier = await getRequestTierWithOverride(request);
+  if (tier === "free") return NextResponse.json({ error: "Full market comparison requires Plus or Pro." }, { status: 403 });
 
   const { marketId } = await params;
-  const provider = getOddsProvider();
-  const data = await provider.fetchData();
-  const rows = buildBookComparisonRows(data, marketId);
+  const feed = await readFeed();
+  const method = tier === "pro" && request.nextUrl.searchParams.get("devigMethod") === "power" ? "power" : "multiplicative";
+  const rows = buildBookComparisonRows(feed.data, marketId, method);
 
-  return NextResponse.json({ rows });
+  return NextResponse.json({ rows, capturedAt: feed.capturedAt });
 }

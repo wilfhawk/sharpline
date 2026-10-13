@@ -1,7 +1,11 @@
+import { AppHeader } from "@/components/layout/AppHeader";
+
 export const metadata = { title: "Privacy Policy — SharpLine" };
 
 export default function PrivacyPage() {
   return (
+    <>
+    <AppHeader />
     <article className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-12 text-sm leading-relaxed text-muted-foreground sm:px-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Privacy Policy</h1>
@@ -67,5 +71,6 @@ export default function PrivacyPage() {
         <p>Questions about this policy can be sent to privacy@sharpline.app.</p>
       </section>
     </article>
+    </>
   );
 }

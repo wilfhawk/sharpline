@@ -50,7 +50,11 @@ export function SignupForm() {
 
     const { email, password } = getValues();
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { age_jurisdiction_accepted: true } },
+    });
 
     if (error) {
       setServerError(error.message);
@@ -59,14 +63,17 @@ export function SignupForm() {
       return;
     }
 
-    if (data.user) {
-      await supabase
-        .from("users")
-        .update({
-          age_gate_consented_at: new Date().toISOString(),
-          jurisdiction_confirmed: true,
-        })
-        .eq("id", data.user.id);
+    if (data.session) {
+      const consent = await fetch("/api/auth/confirm-consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accepted: true }),
+      }).catch(() => null);
+      if (!consent?.ok) {
+        setServerError("Your account was created, but consent could not be recorded. Please try confirming again.");
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     setIsSubmitting(false);

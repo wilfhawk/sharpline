@@ -75,12 +75,13 @@ export function computeAllOpportunities(
     for (const quote of marketQuotes) {
       const sportsbook = sportsbookById.get(quote.sportsbookId);
       if (!sportsbook || sportsbook.isSharpReference) continue;
+      if (Math.abs(Date.parse(quote.timestamp) - Date.parse(sharpQuote.timestamp)) > 60_000) continue;
 
       opportunities.push(
-        buildOpportunity(market, sportsbook, quote, "A", fair.fairProbabilityA)
+        { ...buildOpportunity(market, sportsbook, quote, "A", fair.fairProbabilityA), referenceBook: sportsbookById.get(sharpQuote.sportsbookId)?.name, referenceTimestamp: sharpQuote.timestamp, devigMethod: method }
       );
       opportunities.push(
-        buildOpportunity(market, sportsbook, quote, "B", fair.fairProbabilityB)
+        { ...buildOpportunity(market, sportsbook, quote, "B", fair.fairProbabilityB), referenceBook: sportsbookById.get(sharpQuote.sportsbookId)?.name, referenceTimestamp: sharpQuote.timestamp, devigMethod: method }
       );
     }
   }
@@ -151,7 +152,7 @@ export function buildBookComparisonRows(
         sideLabel,
         oddsDecimal,
         evPercent:
-          sportsbook.isSharpReference || fairProbability === undefined
+          sportsbook.isSharpReference || fairProbability === undefined || (sharpQuote && Math.abs(Date.parse(quote.timestamp) - Date.parse(sharpQuote.timestamp)) > 60_000)
             ? null
             : computeEV(fairProbability, oddsDecimal) * 100,
       });

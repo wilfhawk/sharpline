@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { EvOpportunity, SubscriptionTier } from "@/lib/types";
+import type { DevigMethod, EvOpportunity, SubscriptionTier } from "@/lib/types";
 import { hasLiveOpportunities } from "@/lib/live";
 import { useTierPreview } from "./useTierPreview";
 
@@ -11,15 +11,20 @@ export interface OpportunityFilters {
   marketType?: string;
   minEv?: number;
   liveOnly?: boolean;
+  /** Pro-only: which de-vig model computes fair odds (server ignores this for Free/Plus). */
+  devigMethod?: DevigMethod;
 }
 
 interface OpportunitiesResponse {
   opportunities: EvOpportunity[];
+  facets: { sports: string[]; sportsbooks: { slug: string; name: string }[]; marketTypes: string[] };
   meta: {
     isMock: boolean;
     providerName: string;
     tier: SubscriptionTier;
     generatedAt: string;
+    capturedAt: string;
+    warnings: string[];
   };
 }
 
@@ -34,6 +39,7 @@ function buildQueryString(filters: OpportunityFilters, tierPreview: Subscription
   if (filters.marketType) params.set("marketType", filters.marketType);
   if (filters.minEv !== undefined) params.set("minEv", String(filters.minEv));
   if (filters.liveOnly) params.set("liveOnly", "true");
+  if (filters.devigMethod) params.set("devigMethod", filters.devigMethod);
   if (tierPreview) params.set("tier", tierPreview);
   return params.toString();
 }

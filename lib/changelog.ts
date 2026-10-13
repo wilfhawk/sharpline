@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 /** Add a new entry to the TOP of this array whenever you ship something user-visible. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-11",
+    title: "More sports and a Pro de-vig model picker",
+    items: [
+      "Expanded tracked sports from NFL/NBA to also include MLB, NHL, and NCAAF (college football)",
+      "Added a Pro-only choice of de-vig model (multiplicative or power) used to compute fair odds",
+    ],
+  },
+  {
     date: "2026-10-01",
     title: "Plus tier, alerts, automated CLV, and trust pages",
     items: [

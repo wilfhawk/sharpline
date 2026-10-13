@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useOpportunities, type OpportunityFilters } from "@/hooks/useOpportunities";
 import { useOpportunityAlerts } from "@/hooks/useOpportunityAlerts";
 import { FilterBar } from "./FilterBar";
@@ -30,38 +31,25 @@ export function Dashboard() {
 
   useOpportunityAlerts(opportunities);
 
-  const { sports, sportsbooks, marketTypes } = useMemo(() => {
-    const sportSet = new Set<string>();
-    const bookMap = new Map<string, string>();
-    const marketSet = new Set<string>();
-    for (const o of opportunities) {
-      sportSet.add(o.event.sport);
-      bookMap.set(o.sportsbook.slug, o.sportsbook.name);
-      marketSet.add(o.market.marketType);
-    }
-    return {
-      sports: [...sportSet].sort(),
-      sportsbooks: [...bookMap.entries()]
-        .map(([slug, name]) => ({ slug, name }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-      marketTypes: [...marketSet].sort(),
-    };
-  }, [opportunities]);
+  const { sports, sportsbooks, marketTypes } = data?.facets ?? { sports: [], sportsbooks: [], marketTypes: [] };
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold">+EV Opportunities</h1>
         <p className="text-sm text-muted-foreground">
-          U.S. sportsbook odds compared against de-vigged Pinnacle fair odds.
+          Sportsbook prices compared against de-vigged sharp reference odds.
         </p>
+        <Link href="/games" className="mt-1 w-fit text-sm text-primary underline">Browse all games and markets</Link>
       </div>
 
       {data?.meta.isMock && <MockDataBanner />}
       {data?.meta.tier === "free" && <FreeTierBanner />}
+      {data && <p className="text-xs text-muted-foreground">Snapshot: {new Date(data.meta.capturedAt).toLocaleString()}</p>}
+      {data?.meta.warnings.map((warning) => <p key={warning} role="status" className="text-sm text-amber-600 dark:text-amber-300">{warning}</p>)}
 
       <Tabs defaultValue="ev" className="gap-4">
-        <TabsList>
+        <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="ev">+EV Opportunities</TabsTrigger>
           <TabsTrigger value="arbitrage">Arbitrage</TabsTrigger>
           <TabsTrigger value="middles">Middles</TabsTrigger>
@@ -79,6 +67,7 @@ export function Dashboard() {
             marketTypes={marketTypes}
             filters={filters}
             onChange={setFilters}
+            tier={data?.meta.tier ?? "free"}
           />
 
           <AlertSettings />
@@ -99,8 +88,7 @@ export function Dashboard() {
 
           {!isLoading && !isError && opportunities.length === 0 && (
             <p className="rounded-lg border border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-              No +EV opportunities above your minimum threshold right now — check
-              back shortly, the feed refreshes every 20 seconds.
+              No matching +EV opportunities. <Link href="/games" className="underline">Browse all games</Link> or adjust your filters.
             </p>
           )}
 

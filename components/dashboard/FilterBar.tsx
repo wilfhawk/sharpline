@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { OpportunityFilters } from "@/hooks/useOpportunities";
+import type { SubscriptionTier } from "@/lib/types";
 
 const EV_THRESHOLDS = [2, 3, 5, 10];
 
@@ -21,6 +23,7 @@ export interface FilterBarProps {
   marketTypes: string[];
   filters: OpportunityFilters;
   onChange: (filters: OpportunityFilters) => void;
+  tier: SubscriptionTier;
 }
 
 export function FilterBar({
@@ -29,7 +32,10 @@ export function FilterBar({
   marketTypes,
   filters,
   onChange,
+  tier,
 }: FilterBarProps) {
+  const isPro = tier === "pro";
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select
@@ -38,8 +44,8 @@ export function FilterBar({
           onChange({ ...filters, sport: !value || value === ALL ? undefined : value })
         }
       >
-        <SelectTrigger className="w-36">
-          <SelectValue placeholder="Sport" />
+        <SelectTrigger aria-label="Sport" className="w-36">
+          <SelectValue>{filters.sport ?? "All sports"}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All sports</SelectItem>
@@ -60,8 +66,8 @@ export function FilterBar({
           })
         }
       >
-        <SelectTrigger className="w-40">
-          <SelectValue placeholder="Sportsbook" />
+        <SelectTrigger aria-label="Sportsbook" className="w-40">
+          <SelectValue>{sportsbooks.find((book) => book.slug === filters.sportsbookSlug)?.name ?? "All sportsbooks"}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All sportsbooks</SelectItem>
@@ -79,8 +85,8 @@ export function FilterBar({
           onChange({ ...filters, marketType: !value || value === ALL ? undefined : value })
         }
       >
-        <SelectTrigger className="w-36">
-          <SelectValue placeholder="Market" />
+        <SelectTrigger aria-label="Market type" className="w-36">
+          <SelectValue>{filters.marketType?.replace("_", " ") ?? "All markets"}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All markets</SelectItem>
@@ -96,8 +102,8 @@ export function FilterBar({
         value={String(filters.minEv ?? 2)}
         onValueChange={(value) => onChange({ ...filters, minEv: Number(value ?? 2) })}
       >
-        <SelectTrigger className="w-32">
-          <SelectValue placeholder="Min EV%" />
+        <SelectTrigger aria-label="Minimum EV" className="w-32">
+          <SelectValue>Min +{filters.minEv ?? 2}% EV</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {EV_THRESHOLDS.map((threshold) => (
@@ -115,6 +121,30 @@ export function FilterBar({
         />
         <Label className="cursor-pointer font-normal">Live only</Label>
       </label>
+
+      <div className="flex items-center gap-1.5">
+        <Select
+          value={isPro ? filters.devigMethod ?? "multiplicative" : "multiplicative"}
+          onValueChange={(value) =>
+            onChange({ ...filters, devigMethod: value === "power" ? "power" : "multiplicative" })
+          }
+          disabled={!isPro}
+        >
+          <SelectTrigger aria-label="De-vig model" className="w-44">
+            <SelectValue>{isPro && filters.devigMethod === "power" ? "Power model" : "Multiplicative model"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="multiplicative">Multiplicative model</SelectItem>
+            <SelectItem value="power">Power model</SelectItem>
+          </SelectContent>
+        </Select>
+        {!isPro && (
+          <InfoTooltip>
+            Choosing the de-vig model used to compute fair odds (multiplicative vs.
+            power) is a Pro feature.
+          </InfoTooltip>
+        )}
+      </div>
     </div>
   );
 }

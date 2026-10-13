@@ -8,10 +8,13 @@ import type { SubscriptionTier } from "@/lib/types";
 
 async function setTierByCustomerId(customerId: string, tier: SubscriptionTier) {
   const admin = createAdminClient();
-  await admin
+  const { data, error } = await admin
     .from("users")
     .update({ subscription_tier: tier })
-    .eq("stripe_customer_id", customerId);
+    .eq("stripe_customer_id", customerId)
+    .select("id")
+    .single();
+  if (error || !data) throw new Error("Subscription persistence failed.");
 }
 
 export async function POST(request: NextRequest) {
@@ -35,44 +38,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      if (typeof session.customer !== "string") break;
-
-      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-        expand: ["line_items"],
-      });
-      const priceId = fullSession.line_items?.data[0]?.price?.id;
-      const resolved = priceId ? getTierForPriceId(priceId) : null;
-      // Defaults to "pro" if the price isn't recognized (shouldn't happen for
-      // sessions created by our own checkout route) rather than silently no-op.
-      await setTierByCustomerId(session.customer, resolved?.tier ?? "pro");
-      break;
-    }
-    case "customer.subscription.updated": {
-      const subscription = event.data.object as Stripe.Subscription;
-      const isActive = ["active", "trialing"].includes(subscription.status);
-      if (typeof subscription.customer !== "string") break;
-
-      if (!isActive) {
-        await setTierByCustomerId(subscription.customer, "free");
-        break;
+  const handled = ["checkout.session.completed", "checkout.session.async_payment_succeeded", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"];
+  if (handled.includes(event.type)) {
+    try {
+      const object = event.data.object as Stripe.Subscription | Stripe.Checkout.Session;
+      const customer = typeof object.customer === "string" ? object.customer : object.customer?.id;
+      if (!customer) throw new Error("Missing customer.");
+      let tier: SubscriptionTier = "free";
+      for await (const subscription of stripe.subscriptions.list({ customer, status: "all", limit: 100 })) {
+        if (!["active", "trialing"].includes(subscription.status)) continue;
+        for (const item of subscription.items.data) {
+          const resolved = getTierForPriceId(item.price.id);
+          if (!resolved) throw new Error("Unrecognized subscription price.");
+          if (tier !== "pro") tier = resolved.tier;
+        }
       }
-      const priceId = subscription.items.data[0]?.price?.id;
-      const resolved = priceId ? getTierForPriceId(priceId) : null;
-      await setTierByCustomerId(subscription.customer, resolved?.tier ?? "pro");
-      break;
+      await setTierByCustomerId(customer, tier);
+    } catch (error) {
+      console.error("billing_reconciliation_failed", { eventId: event.id, error: error instanceof Error ? error.message : "Unknown error" });
+      return NextResponse.json({ error: "Billing reconciliation failed; retry required." }, { status: 503 });
     }
-    case "customer.subscription.deleted": {
-      const subscription = event.data.object as Stripe.Subscription;
-      if (typeof subscription.customer === "string") {
-        await setTierByCustomerId(subscription.customer, "free");
-      }
-      break;
-    }
-    default:
-      break;
   }
 
   return NextResponse.json({ received: true });

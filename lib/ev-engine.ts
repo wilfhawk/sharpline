@@ -10,7 +10,7 @@ export type DevigMethod = "multiplicative" | "power";
 export type EvCandidate = { id: string; evPercent: number };
 
 function validateDecimalOdds(oddsA: number, oddsB: number): void {
-  if (oddsA <= 1 || oddsB <= 1) {
+  if (!Number.isFinite(oddsA) || !Number.isFinite(oddsB) || oddsA <= 1 || oddsB <= 1) {
     throw new Error(
       `Invalid decimal odds: ${oddsA}, ${oddsB}. Both must be > 1.`
     );
@@ -41,8 +41,9 @@ export function devigPower(oddsA: number, oddsB: number): FairProbabilities {
   const rawA = 1 / oddsA;
   const rawB = 1 / oddsB;
 
-  let lo = 1;
-  let hi = 64;
+  let lo = 0;
+  let hi = 1;
+  while (rawA ** hi + rawB ** hi > 1) hi *= 2;
   for (let i = 0; i < 100; i++) {
     const mid = (lo + hi) / 2;
     const sum = rawA ** mid + rawB ** mid;

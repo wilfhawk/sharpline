@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/auth";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,7 +47,8 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(safeAuthRedirect(searchParams.get("redirectTo")));
+    router.refresh();
   }
 
   return (
@@ -58,7 +62,15 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
+          <Link
+            href="/forgot-password"
+            className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <Input
           id="password"
           type="password"

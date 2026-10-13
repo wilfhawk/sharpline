@@ -32,6 +32,7 @@ export function matchesSavedFilter(
   if (filters.sport && opportunity.event.sport !== filters.sport) return false;
   if (filters.sportsbookSlug && opportunity.sportsbook.slug !== filters.sportsbookSlug) return false;
   if (filters.marketType && opportunity.market.marketType !== filters.marketType) return false;
+  if (filters.liveOnly && opportunity.event.status !== "live") return false;
   if (filters.minEv !== undefined && opportunity.evPercent < filters.minEv) return false;
   return true;
 }

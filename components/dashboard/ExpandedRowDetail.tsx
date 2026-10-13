@@ -1,7 +1,9 @@
 "use client";
 
 import { useMarketComparison } from "@/hooks/useMarketComparison";
-import { buildSyntheticOddsHistory } from "@/lib/chart-utils";
+import type { OddsHistoryPoint } from "@/lib/chart-utils";
+import { useQuery } from "@tanstack/react-query";
+import { useTierPreview } from "@/hooks/useTierPreview";
 import { evColorClasses, formatAmericanOdds, formatEvPercent } from "@/lib/display";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +14,22 @@ import { ShowMathButton } from "./ShowMathButton";
 import type { EvOpportunity } from "@/lib/types";
 
 export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity }) {
+  const { tierPreview } = useTierPreview();
+  const history = useQuery<OddsHistoryPoint[]>({
+    queryKey: ["history", opportunity.id, tierPreview],
+    queryFn: async () => {
+      const params = new URLSearchParams({ book: opportunity.sportsbook.id, side: opportunity.side });
+      if (tierPreview) params.set("tier", tierPreview);
+      const response = await fetch(`/api/markets/${encodeURIComponent(opportunity.market.id)}/history?${params}`);
+      if (!response.ok) throw new Error("Price history unavailable for this plan or market.");
+      return (await response.json()).history;
+    },
+    retry: false,
+  });
   const { data: rows, isLoading } = useMarketComparison(
     opportunity.market.id,
-    true
+    true,
+    opportunity.devigMethod
   );
 
   const sideARows = rows?.filter((r) => r.side === "A") ?? [];
@@ -22,6 +37,7 @@ export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity 
 
   return (
     <div className="grid gap-6 border-t border-border/60 bg-muted/20 p-4 sm:grid-cols-2">
+      {opportunity.referenceBook && <p className="text-xs text-muted-foreground sm:col-span-2">Reference: {opportunity.referenceBook} / {opportunity.devigMethod} / {opportunity.referenceTimestamp ? new Date(opportunity.referenceTimestamp).toLocaleString() : "Timestamp unavailable"}</p>}
       <div>
         <h4 className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           {opportunity.market.sideALabel}
@@ -39,12 +55,9 @@ export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity 
         <h4 className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           {opportunity.sportsbook.name} — {opportunity.sideLabel} price history
         </h4>
-        <LineMovementChart
-          history={buildSyntheticOddsHistory(
-            opportunity.oddsDecimal,
-            opportunity.id
-          )}
-        />
+        {history.data && history.data.length > 1 ? <LineMovementChart history={history.data} /> : (
+          <p className="text-sm text-muted-foreground">{history.isPending ? "Loading history..." : history.isError ? "Price history is unavailable for this plan or market." : "No recorded price history yet."}</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:items-start">

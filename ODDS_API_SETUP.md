@@ -16,7 +16,7 @@ it doesn't exist yet) and set:
 ```
 ODDS_PROVIDER=the-odds-api
 ODDS_API_KEY=<paste your key here>
-ODDS_API_SPORTS=americanfootball_nfl,basketball_nba
+ODDS_API_SPORTS=americanfootball_nfl,basketball_nba,baseball_mlb,icehockey_nhl,americanfootball_ncaaf
 ODDS_API_REGIONS=us,eu
 ODDS_API_CACHE_SECONDS=3600
 ```
@@ -49,8 +49,8 @@ ODDS_API_CACHE_SECONDS=3600
 
 ## Budget math (free tier, 500 credits/month)
 
-Cost per refresh = `[sports] x [markets=3] x [regions]`. Default (2 sports,
-2 regions) = 12 credits/refresh ≈ 41 refreshes/month. Track fewer sports or
+Cost per refresh = `[sports] x [markets=3] x [regions]`. Default (5 sports,
+2 regions) = 30 credits/refresh ≈ 16 refreshes/month. Track fewer sports or
 drop a region to stretch the budget further — see `README.md` for the full
 breakdown, optional `ODDS_API_EXTRA_MARKETS` (player props), and
 `ODDS_API_SHARP_BOOKS` fallback chain.

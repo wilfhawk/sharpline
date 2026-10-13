@@ -26,9 +26,9 @@ function hoursFromNow(hours: number): string {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 }
 
-/** Simulates a live feed: each snapshot lands somewhere in the last 0-20 minutes. */
+/** Simulates contemporaneous quotes within a 30-second observation window. */
 function jitteredRecentTimestamp(): string {
-  const minutesAgo = Math.random() * 20;
+  const minutesAgo = Math.random() * 0.5;
   return new Date(Date.now() - minutesAgo * 60 * 1000).toISOString();
 }
 
@@ -49,6 +49,12 @@ const EVENT_SEEDS: EventSeed[] = [
   { id: "evt-celtics-bucks", sport: "Basketball", league: "NBA", homeTeam: "Bucks", awayTeam: "Celtics", startInHours: 5.5, status: "upcoming" },
   { id: "evt-49ers-rams", sport: "Football", league: "NFL", homeTeam: "Rams", awayTeam: "49ers", startInHours: 51, status: "upcoming" },
   { id: "evt-nuggets-suns", sport: "Basketball", league: "NBA", homeTeam: "Suns", awayTeam: "Nuggets", startInHours: 8, status: "upcoming" },
+  { id: "evt-yankees-redsox", sport: "Baseball", league: "MLB", homeTeam: "Red Sox", awayTeam: "Yankees", startInHours: 4, status: "upcoming" },
+  { id: "evt-dodgers-padres", sport: "Baseball", league: "MLB", homeTeam: "Padres", awayTeam: "Dodgers", startInHours: 0.5, status: "live" },
+  { id: "evt-bruins-rangers", sport: "Hockey", league: "NHL", homeTeam: "Rangers", awayTeam: "Bruins", startInHours: 6, status: "upcoming" },
+  { id: "evt-oilers-avalanche", sport: "Hockey", league: "NHL", homeTeam: "Avalanche", awayTeam: "Oilers", startInHours: 30, status: "upcoming" },
+  { id: "evt-georgia-alabama", sport: "Football", league: "NCAAF", homeTeam: "Alabama", awayTeam: "Georgia", startInHours: 10, status: "upcoming" },
+  { id: "evt-osu-michigan", sport: "Football", league: "NCAAF", homeTeam: "Michigan", awayTeam: "Ohio State", startInHours: 34, status: "upcoming" },
 ];
 
 /** American odds (home, away) per sportsbook, keyed by sportsbook id, for one moneyline market. */
@@ -112,6 +118,60 @@ const MONEYLINE_ODDS: Record<string, MoneylineBookOdds> = {
     "sb-betmgm": [-158, 132],
     "sb-caesars": [-145, 145],
   },
+  "evt-yankees-redsox": {
+    "sb-pinnacle": [-122, 110],
+    "sb-circa": [-120, 108],
+    "sb-betonline": [-125, 112],
+    "sb-draftkings": [-115, 100],
+    "sb-fanduel": [-130, 115],
+    "sb-betmgm": [-118, 105],
+    "sb-caesars": [-128, 118],
+  },
+  "evt-dodgers-padres": {
+    "sb-pinnacle": [-165, 145],
+    "sb-circa": [-162, 142],
+    "sb-betonline": [-168, 148],
+    "sb-draftkings": [-170, 140],
+    "sb-fanduel": [-160, 150],
+    "sb-betmgm": [-172, 145],
+    "sb-caesars": [-155, 155],
+  },
+  "evt-bruins-rangers": {
+    "sb-pinnacle": [-135, 118],
+    "sb-circa": [-132, 115],
+    "sb-betonline": [-138, 120],
+    "sb-draftkings": [-130, 112],
+    "sb-fanduel": [-140, 122],
+    "sb-betmgm": [-133, 116],
+    "sb-caesars": [-142, 128],
+  },
+  "evt-oilers-avalanche": {
+    "sb-pinnacle": [112, -128],
+    "sb-circa": [110, -126],
+    "sb-betonline": [115, -132],
+    "sb-draftkings": [105, -122],
+    "sb-fanduel": [120, -135],
+    "sb-betmgm": [108, -125],
+    "sb-caesars": [118, -138],
+  },
+  "evt-georgia-alabama": {
+    "sb-pinnacle": [-145, 125],
+    "sb-circa": [-142, 122],
+    "sb-betonline": [-148, 128],
+    "sb-draftkings": [-150, 120],
+    "sb-fanduel": [-140, 130],
+    "sb-betmgm": [-148, 122],
+    "sb-caesars": [-135, 135],
+  },
+  "evt-osu-michigan": {
+    "sb-pinnacle": [-108, -108],
+    "sb-circa": [-106, -106],
+    "sb-betonline": [-112, -110],
+    "sb-draftkings": [-105, -112],
+    "sb-fanduel": [-112, -105],
+    "sb-betmgm": [-108, -110],
+    "sb-caesars": [-102, -115],
+  },
 };
 
 const TOTAL_LINE_VALUE: Record<string, number> = {
@@ -121,6 +181,12 @@ const TOTAL_LINE_VALUE: Record<string, number> = {
   "evt-celtics-bucks": 218.5,
   "evt-49ers-rams": 46,
   "evt-nuggets-suns": 231.5,
+  "evt-yankees-redsox": 8.5,
+  "evt-dodgers-padres": 7.5,
+  "evt-bruins-rangers": 6.5,
+  "evt-oilers-avalanche": 6,
+  "evt-georgia-alabama": 54.5,
+  "evt-osu-michigan": 48.5,
 };
 
 const TOTAL_ODDS: Record<string, TotalBookOdds> = {
@@ -177,6 +243,60 @@ const TOTAL_ODDS: Record<string, TotalBookOdds> = {
     "sb-fanduel": [-102, -115],
     "sb-betmgm": [-107, -110],
     "sb-caesars": [-113, -101],
+  },
+  "evt-yankees-redsox": {
+    "sb-pinnacle": [-105, -112],
+    "sb-circa": [-103, -110],
+    "sb-betonline": [-107, -114],
+    "sb-draftkings": [-100, -116],
+    "sb-fanduel": [-110, -108],
+    "sb-betmgm": [-104, -113],
+    "sb-caesars": [-108, -110],
+  },
+  "evt-dodgers-padres": {
+    "sb-pinnacle": [-108, -108],
+    "sb-circa": [-106, -106],
+    "sb-betonline": [-110, -110],
+    "sb-draftkings": [-105, -110],
+    "sb-fanduel": [-115, -102],
+    "sb-betmgm": [-110, -108],
+    "sb-caesars": [-100, -118],
+  },
+  "evt-bruins-rangers": {
+    "sb-pinnacle": [-110, -105],
+    "sb-circa": [-108, -103],
+    "sb-betonline": [-112, -107],
+    "sb-draftkings": [-108, -108],
+    "sb-fanduel": [-118, -100],
+    "sb-betmgm": [-110, -110],
+    "sb-caesars": [-104, -114],
+  },
+  "evt-oilers-avalanche": {
+    "sb-pinnacle": [-107, -110],
+    "sb-circa": [-105, -108],
+    "sb-betonline": [-109, -112],
+    "sb-draftkings": [-110, -107],
+    "sb-fanduel": [-100, -117],
+    "sb-betmgm": [-112, -105],
+    "sb-caesars": [-105, -112],
+  },
+  "evt-georgia-alabama": {
+    "sb-pinnacle": [-110, -108],
+    "sb-circa": [-108, -106],
+    "sb-betonline": [-112, -110],
+    "sb-draftkings": [-115, -102],
+    "sb-fanduel": [-105, -112],
+    "sb-betmgm": [-108, -110],
+    "sb-caesars": [-118, -100],
+  },
+  "evt-osu-michigan": {
+    "sb-pinnacle": [-108, -108],
+    "sb-circa": [-106, -106],
+    "sb-betonline": [-110, -110],
+    "sb-draftkings": [-105, -110],
+    "sb-fanduel": [-115, -102],
+    "sb-betmgm": [-110, -108],
+    "sb-caesars": [-100, -118],
   },
 };
 

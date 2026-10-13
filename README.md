@@ -28,7 +28,7 @@ the dashboard, landing page, or legal pages.
 Copy `.env.local.example` to `.env.local` and fill in real values to enable
 the corresponding feature. Everything left blank degrades gracefully (auth
 pages show a "not configured" message; the dashboard keeps working on mock
-data; `middleware.ts` skips the Supabase session check entirely):
+data; `proxy.ts` skips the Supabase session check entirely):
 
 | Variable | Enables |
 | --- | --- |
@@ -42,6 +42,7 @@ data; `middleware.ts` skips the Supabase session check entirely):
 | `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | Email alerts (`app/api/cron/alerts`) via [Resend](https://resend.com); alerts silently no-op when unset |
 | `CRON_SECRET` | Protects `/api/cron/*` routes — Vercel sends it automatically as a Bearer token once set, see `vercel.json` |
 | `AGE_GATE_MINIMUM` | Minimum age enforced by the signup age-gate modal (default 21) |
+| `NEXT_PUBLIC_ENABLE_TIER_PREVIEW` | Owner-only "preview as Free/Plus/Pro" toggle in the header for testing paid tiers without a real subscription — **leave `false`/unset on any URL shared with others** (e.g. friends reviewing the site), since they'd otherwise be able to unlock Plus/Pro for free. Set to `true` only in your own local `.env.local` |
 
 To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`,
 `0002_user_extensions.sql`, `0003_plus_tier_alerts_clv.sql`, and
@@ -81,7 +82,8 @@ settings (see `app/api/auth/callback/route.ts`).
    `.env.local`.
 3. Optionally adjust `ODDS_API_SPORTS` (comma-separated
    [sport keys](https://the-odds-api.com/sports-odds-data/sports-apis.html),
-   default `americanfootball_nfl,basketball_nba`) and `ODDS_API_REGIONS`
+   default `americanfootball_nfl,basketball_nba,baseball_mlb,icehockey_nhl,americanfootball_ncaaf`)
+   and `ODDS_API_REGIONS`
    (default `us,eu` — `eu` is required to get Pinnacle, the sharp reference
    book the EV engine devigs against).
 4. `ODDS_API_CACHE_SECONDS` (default 3600) controls how long Next.js caches
@@ -100,8 +102,8 @@ settings (see `app/api/auth/callback/route.ts`).
    usually needed for full 20+ book coverage across many sports.
 
 **Free-tier budget (500 credits/month):** cost per refresh is
-`[sports] x [markets=3] x [regions]`. With the default 2 sports and 2 regions
-(`us,eu`), that's 12 credits per refresh — about 41 refreshes/month. The
+`[sports] x [markets=3] x [regions]`. With the default 5 sports and 2 regions
+(`us,eu`), that's 30 credits per refresh — about 16 refreshes/month. The
 default `ODDS_API_CACHE_SECONDS=3600` (1hr) keeps a testing session well
 within quota; repeated dashboard reloads inside that hour are served from
 cache for free. Track fewer sports or drop a region to fit more refreshes in
@@ -142,7 +144,7 @@ are unit tested with ~99% coverage.
   chart, since mock mode has no real historical snapshots yet).
 - `components/auth/` — login/signup forms and the age/jurisdiction gate modal.
 - `app/api/stripe/` — checkout, billing portal, and webhook routes (test mode).
-- `middleware.ts` — Supabase session refresh + a no-op geofencing hook (see
+- `proxy.ts` — Supabase session refresh + a no-op geofencing hook (see
   `COMPLIANCE.md`).
 - `lib/middles.ts` + `components/dashboard/MiddlesList.tsx` — finds a middle
   when the same event's total is quoted at two different lines (bet Over the

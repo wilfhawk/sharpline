@@ -7,6 +7,8 @@ export const savedFilterSchema = z.object({
     sportsbookSlug: z.string().optional(),
     marketType: z.string().optional(),
     minEv: z.number().optional(),
+    liveOnly: z.boolean().optional(),
+    devigMethod: z.enum(["multiplicative", "power"]).optional(),
   }),
 });
 

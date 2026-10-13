@@ -10,7 +10,7 @@ function geoCheck(): { allowed: boolean } {
   return { allowed: true };
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   geoCheck();
 
   // No Supabase project wired up yet (mock-data-only dev mode) — nothing to check.

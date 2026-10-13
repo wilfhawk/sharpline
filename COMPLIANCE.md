@@ -33,7 +33,7 @@ wiring in a real provider (The Odds API, OpticOdds, SportsGameOdds, etc.):
 
 ## Geofencing
 
-`middleware.ts` includes a `geoCheck()` hook that is a no-op today (always
+`proxy.ts` includes a `geoCheck()` hook that is a no-op today (always
 allows). If legal counsel advises restricting access by state/country (common
 for sports-betting-adjacent products in some US states), implement the real
 check there — it already runs on every request before the Supabase session
