@@ -34,6 +34,7 @@ function findSharpQuote(
 
 /** Props rarely have a sharp quote, so fair odds come from the other books' average de-vigged price. */
 export const MIN_CONSENSUS_BOOKS = 3;
+export const CONSENSUS_REFERENCE_PREFIX = "Market consensus";
 
 interface ConsensusFair {
   fairProbabilityA: number;
@@ -104,7 +105,7 @@ export function computeAllOpportunities(
         if (!sportsbook) continue;
         const consensus = consensusFair(marketQuotes, quote.sportsbookId, method);
         if (!consensus) continue;
-        const extras = { referenceBook: `Market consensus (${consensus.bookCount} books)`, referenceTimestamp: consensus.timestamp, devigMethod: method };
+        const extras = { referenceBook: `${CONSENSUS_REFERENCE_PREFIX} (${consensus.bookCount} books)`, referenceTimestamp: consensus.timestamp, devigMethod: method };
         opportunities.push({ ...buildOpportunity(market, sportsbook, quote, "A", consensus.fairProbabilityA), ...extras });
         opportunities.push({ ...buildOpportunity(market, sportsbook, quote, "B", consensus.fairProbabilityB), ...extras });
       }

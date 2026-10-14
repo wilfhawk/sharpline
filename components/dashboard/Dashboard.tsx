@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useOpportunities, type OpportunityFilters } from "@/hooks/useOpportunities";
 import { useOpportunityAlerts } from "@/hooks/useOpportunityAlerts";
 import { FilterBar } from "./FilterBar";
+import { ProfileBar } from "./ProfileBar";
 import { MockDataBanner } from "./MockDataBanner";
 import { FreeTierBanner } from "./FreeTierBanner";
 import { OpportunityTable } from "./OpportunityTable";
@@ -18,10 +19,18 @@ import { ProFeatureUpsell } from "./ProFeatureUpsell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupOpportunitiesByEvent } from "@/lib/opportunity-groups";
+import { useDashboardProfile } from "@/hooks/useDashboardProfile";
 
 export function Dashboard() {
-  const [filters, setFilters] = useState<OpportunityFilters>({ minEv: 2 });
-  const { data, isLoading, isError } = useOpportunities(filters);
+  const [baseFilters, setFilters] = useState<OpportunityFilters>({ minEv: 2 });
+  const { profile, synced, isReady, save } = useDashboardProfile();
+  // The profile (sports + sportsbooks) is always applied; empty means all.
+  const filters = useMemo<OpportunityFilters>(
+    () => ({ ...baseFilters, leagues: profile.leagues, sportsbookSlugs: profile.sportsbooks }),
+    [baseFilters, profile]
+  );
+  const { data, isLoading: isFetchingFirst, isError } = useOpportunities(filters, { enabled: isReady });
+  const isLoading = isFetchingFirst || !isReady;
 
   const opportunities = useMemo(() => data?.opportunities ?? [], [data?.opportunities]);
   const eventGroups = useMemo(
@@ -31,7 +40,7 @@ export function Dashboard() {
 
   useOpportunityAlerts(opportunities);
 
-  const { sports, sportsbooks, marketTypes } = data?.facets ?? { sports: [], sportsbooks: [], marketTypes: [] };
+  const { leagues, sportsbooks, marketTypes } = data?.facets ?? { leagues: [], sportsbooks: [], marketTypes: [] };
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6">
@@ -48,6 +57,14 @@ export function Dashboard() {
       {data && <p className="text-xs text-muted-foreground">Snapshot: {new Date(data.meta.capturedAt).toLocaleString()}</p>}
       {data?.meta.warnings.map((warning) => <p key={warning} role="status" className="text-sm text-amber-600 dark:text-amber-300">{warning}</p>)}
 
+      <ProfileBar
+        leagues={leagues}
+        sportsbooks={sportsbooks}
+        profile={profile}
+        synced={synced}
+        onChange={save}
+      />
+
       <Tabs defaultValue="ev" className="gap-4">
         <TabsList className="grid h-auto w-full grid-cols-2 group-data-horizontal/tabs:h-auto sm:grid-cols-4">
           <TabsTrigger value="ev">+EV Opportunities</TabsTrigger>
@@ -62,10 +79,8 @@ export function Dashboard() {
           )}
 
           <FilterBar
-            sports={sports}
-            sportsbooks={sportsbooks}
             marketTypes={marketTypes}
-            filters={filters}
+            filters={baseFilters}
             onChange={setFilters}
             tier={data?.meta.tier ?? "free"}
           />

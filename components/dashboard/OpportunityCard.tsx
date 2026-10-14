@@ -12,6 +12,7 @@ import {
 import type { EventOpportunityGroup } from "@/lib/opportunity-groups";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
 import { LiveOrTimeToStart } from "./OpportunityTable";
+import { PredictionBadge } from "./PredictionPanel";
 
 export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
   const [expanded, setExpanded] = useState(false);
@@ -35,6 +36,7 @@ export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
           >
             {formatEvPercent(opportunity.evPercent)}
           </span>
+          <PredictionBadge prediction={opportunity.prediction} />
           <button
             type="button"
             aria-label={`${expanded ? "Hide" : "Show"} ${group.opportunities.length} ${group.opportunities.length === 1 ? "offer" : "offers"} for ${opportunity.event.awayTeam} at ${opportunity.event.homeTeam}`}

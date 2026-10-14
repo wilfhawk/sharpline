@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("all games supports stable sport and search filters", async ({ page }) => {
   await page.goto("/games");
   await expect(page.getByRole("heading", { name: "All Games", exact: true })).toBeVisible();
-  await page.getByRole("combobox", { name: "Sport", exact: true }).selectOption({ label: "Baseball" });
+  await page.getByRole("combobox", { name: "Sport", exact: true }).selectOption({ label: "MLB" });
   await expect(page.getByRole("button", { name: /Yankees|Red Sox/ }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /Chiefs/ })).toHaveCount(0);
   await page.getByRole("combobox", { name: "Sport", exact: true }).selectOption("");
@@ -16,7 +16,7 @@ test("all games supports stable sport and search filters", async ({ page }) => {
 test("mobile dashboard and calculator fit and calculations update", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/dashboard");
-  await expect(page.getByRole("combobox", { name: "Sport", exact: true })).toContainText("All sports");
+  await expect(page.getByRole("button", { name: "Sports", exact: true })).toContainText("All sports");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: "test-results/dashboard-mobile.png", fullPage: true });
   await page.goto("/learn/earnings");
@@ -88,4 +88,41 @@ test("new pages fit a 375px screen", async ({ page }) => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), path).toBe(true);
   }
+});
+
+test("landing demo launcher opens the dashboard as the chosen plan", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/");
+  await page.getByTestId("demo-launcher").first().getByRole("button", { name: "Demo as Plus" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("button", { name: "PLUS", exact: true })).toBeVisible();
+});
+
+test("dashboard sports and sportsbooks selections filter results and persist", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/dashboard?tier=pro");
+  const sports = page.getByRole("button", { name: "Sports", exact: true });
+  await expect(sports).toContainText("All sports");
+  await sports.click();
+  await page.getByRole("menuitemcheckbox", { name: "NFL" }).click();
+  await page.keyboard.press("Escape");
+  await expect(sports).toContainText("NFL");
+  await expect(page.getByText(/Chiefs|Bills|Eagles|Cowboys|49ers|Rams/).first()).toBeVisible();
+  await expect(page.getByText(/Lakers|Warriors|Yankees/)).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Sports", exact: true })).toContainText("NFL");
+  await page.getByRole("button", { name: "Show all" }).click();
+  await expect(page.getByRole("button", { name: "Sports", exact: true })).toContainText("All sports");
+});
+
+test("any game can be looked up with predictions, even without an edge", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/games?tier=pro");
+  await page.getByRole("textbox", { name: "Search teams or leagues" }).fill("Chiefs");
+  await page.getByRole("button", { name: /Chiefs/ }).click();
+  await page.getByRole("link", { name: "View predictions for this game" }).click();
+  await expect(page).toHaveURL(/\/games\/evt-/, { timeout: 60_000 });
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Chiefs", { timeout: 30_000 });
+  await expect(page.getByText(/Model (agrees|neutral|disagrees)/).first()).toBeVisible();
+  await expect(page.getByText("Reference").first()).toBeVisible();
 });

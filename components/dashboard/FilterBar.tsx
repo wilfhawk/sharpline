@@ -14,13 +14,15 @@ import type { OpportunityFilters } from "@/hooks/useOpportunities";
 import type { SubscriptionTier } from "@/lib/types";
 import { formatMarketType } from "@/lib/display";
 
-const EV_THRESHOLDS = [2, 3, 5, 10];
+const EV_THRESHOLDS = [0, 2, 3, 5, 10];
+
+function evLabel(threshold: number): string {
+  return threshold === 0 ? "All best odds" : `Min +${threshold}% EV`;
+}
 
 const ALL = "all";
 
 export interface FilterBarProps {
-  sports: string[];
-  sportsbooks: { slug: string; name: string }[];
   marketTypes: string[];
   filters: OpportunityFilters;
   onChange: (filters: OpportunityFilters) => void;
@@ -28,8 +30,6 @@ export interface FilterBarProps {
 }
 
 export function FilterBar({
-  sports,
-  sportsbooks,
   marketTypes,
   filters,
   onChange,
@@ -39,47 +39,6 @@ export function FilterBar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select
-        value={filters.sport ?? ALL}
-        onValueChange={(value) =>
-          onChange({ ...filters, sport: !value || value === ALL ? undefined : value })
-        }
-      >
-        <SelectTrigger aria-label="Sport" className="w-36">
-          <SelectValue>{filters.sport ?? "All sports"}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All sports</SelectItem>
-          {sports.map((sport) => (
-            <SelectItem key={sport} value={sport}>
-              {sport}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select
-        value={filters.sportsbookSlug ?? ALL}
-        onValueChange={(value) =>
-          onChange({
-            ...filters,
-            sportsbookSlug: !value || value === ALL ? undefined : value,
-          })
-        }
-      >
-        <SelectTrigger aria-label="Sportsbook" className="w-40">
-          <SelectValue>{sportsbooks.find((book) => book.slug === filters.sportsbookSlug)?.name ?? "All sportsbooks"}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All sportsbooks</SelectItem>
-          {sportsbooks.map((book) => (
-            <SelectItem key={book.slug} value={book.slug}>
-              {book.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
       <Select
         value={filters.marketType ?? ALL}
         onValueChange={(value) =>
@@ -104,12 +63,12 @@ export function FilterBar({
         onValueChange={(value) => onChange({ ...filters, minEv: Number(value ?? 2) })}
       >
         <SelectTrigger aria-label="Minimum EV" className="w-32">
-          <SelectValue>Min +{filters.minEv ?? 2}% EV</SelectValue>
+          <SelectValue>{evLabel(filters.minEv ?? 2)}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {EV_THRESHOLDS.map((threshold) => (
             <SelectItem key={threshold} value={String(threshold)}>
-              Min +{threshold}% EV
+              {evLabel(threshold)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -122,6 +81,22 @@ export function FilterBar({
         />
         <Label className="cursor-pointer font-normal">Live only</Label>
       </label>
+
+      <div className="flex items-center gap-1.5">
+        <label className="flex items-center gap-2 rounded-md border border-border/60 px-3 py-2 text-sm">
+          <Checkbox
+            checked={isPro && (filters.modelAgrees ?? false)}
+            disabled={!isPro}
+            onCheckedChange={(checked) => onChange({ ...filters, modelAgrees: checked === true })}
+          />
+          <Label className="cursor-pointer font-normal">Model agrees</Label>
+        </label>
+        {!isPro && (
+          <InfoTooltip>
+            Showing only bets where the AI model also sees positive EV is a Pro feature.
+          </InfoTooltip>
+        )}
+      </div>
 
       <div className="flex items-center gap-1.5">
         <Select

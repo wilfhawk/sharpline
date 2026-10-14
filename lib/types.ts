@@ -52,6 +52,19 @@ export interface OddsQuote {
 
 export type MarketSide = "A" | "B";
 
+export type ModelAgreement = "agrees" | "neutral" | "disagrees";
+export type PredictionConfidence = "low" | "medium" | "high";
+
+/** Model view of an opportunity; probability and edge are Pro-only and omitted for Plus. */
+export interface OpportunityPrediction {
+  modelVersion: string;
+  /** Whether the model also sees positive EV at this price. */
+  agreement: ModelAgreement;
+  confidence: PredictionConfidence;
+  modelProbability?: number;
+  modelEdgePercent?: number;
+}
+
 /** A ranked +EV opportunity: one book, one side, one market, compared to Pinnacle fair odds. */
 export interface EvOpportunity {
   referenceBook?: string;
@@ -70,6 +83,8 @@ export interface EvOpportunity {
   snapshotTimestamp: string;
   /** Where to place this bet: a feed deep link when available, else the sportsbook's site. */
   betLink?: string;
+  /** Present for Plus/Pro responses only. */
+  prediction?: OpportunityPrediction;
 }
 
 /** All tracked books' current price for one exact market side, for the expanded row view. */

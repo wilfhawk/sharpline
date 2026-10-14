@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 /** Add a new entry to the TOP of this array whenever you ship something user-visible. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-14",
+    title: "Experimental AI model view",
+    items: [
+      "Plus and Pro now show whether an independent model also sees positive EV, with a confidence level",
+      "Pro adds the model probability, model EV, a \"Model agrees\" filter and alert option, and an AI-written explanation of each estimate",
+      "The model is experimental and market-anchored; its error against the closing line is published on the Methodology page",
+    ],
+  },
+  {
     date: "2026-10-12",
     title: "All games, earnings calculator, player props, and promo tools",
     items: [

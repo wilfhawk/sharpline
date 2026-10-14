@@ -41,8 +41,9 @@ data; `proxy.ts` skips the Supabase session check entirely):
 | `ODDS_API_SHARP_BOOKS` | Priority-ordered sharp reference bookmaker keys (default `pinnacle`), e.g. `pinnacle,circasports,betonlineag` — the engine falls back to the next book in the list when a higher-priority one hasn't posted a line for a market |
 | `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | Email alerts (`app/api/cron/alerts`) via [Resend](https://resend.com); alerts silently no-op when unset |
 | `CRON_SECRET` | Protects `/api/cron/*` routes — Vercel sends it automatically as a Bearer token once set, see `vercel.json` |
+| `GEMINI_API_KEY` / `GEMINI_MODEL` | Optional. Pro model explanations (`/api/predictions/explain`) are written by Gemini (default `gemini-2.0-flash`); a deterministic template is used when unset or on any failure. Apply migration `0007_prediction_log.sql` to enable prediction logging and the Methodology scorecard |
 | `AGE_GATE_MINIMUM` | Minimum age enforced by the signup age-gate modal (default 21) |
-| `NEXT_PUBLIC_ENABLE_TIER_PREVIEW` | Owner-only "preview as Free/Plus/Pro" toggle in the header for testing paid tiers without a real subscription — **leave `false`/unset on any URL shared with others** (e.g. friends reviewing the site), since they'd otherwise be able to unlock Plus/Pro for free. Set to `true` only in your own local `.env.local` |
+| `NEXT_PUBLIC_ENABLE_TIER_PREVIEW` | Owner-only test mode: shows the "Try the demo" buttons on the landing page and the "preview as Free/Plus/Pro" toggle in the header, and lets `?tier=` override the plan, for testing paid tiers without a real subscription. **Set to `false`/unset before deploying** (and on any URL shared with others), since visitors could otherwise unlock Plus/Pro for free. It is read at build time, so redeploy after changing it. Set to `true` only in your own local `.env.local` |
 
 To wire up Supabase: run the SQL in `supabase/migrations/0001_init.sql`,
 `0002_user_extensions.sql`, `0003_plus_tier_alerts_clv.sql`, and

@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { readFeed } from "@/lib/feed";
 import { computeAllOpportunities } from "@/lib/opportunities";
+import { attachPredictions } from "@/lib/predictions";
 import { computeArbitrageOpportunities } from "@/lib/arbitrage";
 import { computeMiddleOpportunities } from "@/lib/middles";
 import { canReceiveAlerts, hasProFeatures } from "@/lib/subscription";
@@ -104,10 +105,17 @@ export async function GET(request: NextRequest) {
 
     const modelOpportunities = hasProFeatures(user.subscription_tier) && filterSets.some((filters) => filters.devigMethod === "power")
       ? computeAllOpportunities(data, "power") : evOpportunities;
-    let candidates = preference.ev_enabled ? filterSets.flatMap((filters) => buildEvAlertCandidates(
-      filters.devigMethod === "power" && hasProFeatures(user.subscription_tier) ? modelOpportunities : evOpportunities,
-      [filters]
-    )).filter((candidate) => (candidate.evPercent ?? 0) >= preference.threshold_percent) : [];
+    let candidates = preference.ev_enabled ? filterSets.flatMap((filters) => {
+      const isPro = hasProFeatures(user.subscription_tier);
+      const method = filters.devigMethod === "power" && isPro ? "power" : "multiplicative";
+      const base = method === "power" ? modelOpportunities : evOpportunities;
+      // Model agreement is Pro-only; Plus filters ignore it.
+      const wantsModel = isPro && filters.modelAgrees === true;
+      return buildEvAlertCandidates(
+        wantsModel ? attachPredictions(data, base, method) : base,
+        [{ ...filters, modelAgrees: wantsModel }]
+      );
+    }).filter((candidate) => (candidate.evPercent ?? 0) >= preference.threshold_percent) : [];
     candidates = [...new Map(candidates.map((candidate) => [`${candidate.marketId}:${candidate.sportsbookSlug}:${candidate.side}`, candidate])).values()];
     if (hasProFeatures(user.subscription_tier)) {
       candidates = candidates.concat(

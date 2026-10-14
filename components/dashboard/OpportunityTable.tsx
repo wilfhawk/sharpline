@@ -22,6 +22,7 @@ import type { EvOpportunity } from "@/lib/types";
 import { groupOpportunitiesByEvent } from "@/lib/opportunity-groups";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { PredictionBadge } from "./PredictionPanel";
 
 type SortKey = "event" | "evPercent" | "oddsDecimal" | "startTime";
 
@@ -135,6 +136,7 @@ export function OpportunityTable({
                     >
                       {formatEvPercent(o.evPercent)}
                     </span>
+                    <div className="mt-1"><PredictionBadge prediction={o.prediction} /></div>
                   </TableCell>
                   <TableCell className="tabular-nums">
                     {formatAmericanOdds(o.oddsDecimal)}

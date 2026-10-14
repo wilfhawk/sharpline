@@ -1,6 +1,8 @@
 {
   "crons": [
+    { "path": "/api/cron/ingest", "schedule": "0 12 * * *" },
     { "path": "/api/cron/alerts", "schedule": "0 15 * * *" },
-    { "path": "/api/cron/capture-closing-lines", "schedule": "0 0 * * *" }
+    { "path": "/api/cron/capture-closing-lines", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/score-predictions", "schedule": "30 0 * * *" }
   ]
 }

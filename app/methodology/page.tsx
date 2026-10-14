@@ -1,6 +1,8 @@
 import { AppHeader } from "@/components/layout/AppHeader";
+import { ModelScorecard } from "./ModelScorecard";
 
 export const metadata = { title: "Methodology — SharpLine" };
+export const revalidate = 3600;
 
 export default function MethodologyPage() {
   return (
@@ -129,6 +131,8 @@ fairProbabilityB = rawB^k`}
           related but distinct concepts from the de-vig math on this page.
         </p>
       </section>
+
+      <ModelScorecard />
     </article>
     </>
   );

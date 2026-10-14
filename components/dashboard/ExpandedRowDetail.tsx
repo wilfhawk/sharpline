@@ -17,6 +17,7 @@ import { ExternalLink } from "lucide-react";
 import { useBookTracker } from "@/hooks/useBookTracker";
 import { activePromos } from "@/lib/book-tracker";
 import { buttonVariants } from "@/components/ui/button";
+import { PredictionPanel } from "./PredictionPanel";
 
 export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity }) {
   const { tierPreview } = useTierPreview();
@@ -67,6 +68,8 @@ export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity 
           <p className="text-sm text-muted-foreground">{history.isPending ? "Loading history..." : history.isError ? "Price history is unavailable for this plan or market." : "No recorded price history yet."}</p>
         )}
       </div>
+
+      <PredictionPanel opportunity={opportunity} />
 
       <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:items-start">
         <StakeSizer opportunity={opportunity} />

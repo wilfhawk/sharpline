@@ -6,6 +6,7 @@ import { LiveProof } from "@/components/marketing/LiveProof";
 import { ComparisonTable } from "@/components/marketing/ComparisonTable";
 import { RoiCalculator } from "@/components/marketing/RoiCalculator";
 import { PricingSection } from "@/components/marketing/PricingSection";
+import { DemoLauncher } from "@/components/marketing/DemoLauncher";
 import {
   ArrowRight,
   Clock,
@@ -120,6 +121,7 @@ export default function LandingPage() {
               How it works
             </Button>
           </div>
+          <DemoLauncher />
         </div>
       </section>
 
@@ -180,6 +182,9 @@ export default function LandingPage() {
           </p>
         </div>
         <PricingSection />
+        <div className="mt-8">
+          <DemoLauncher compact />
+        </div>
       </section>
 
       <section className="border-t border-border/60 bg-muted/10">
