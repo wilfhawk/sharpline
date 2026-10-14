@@ -49,3 +49,24 @@ export function formatTimeToStart(startTimeIso: string, nowMs = Date.now()): str
   if (minutes === 0) return `in ${hours}h`;
   return `in ${hours}h ${minutes}m`;
 }
+
+/** Date and time for a later day ("Thu, Oct 1, 7:30 PM"), a countdown ("in 3h 15m") on the day of the game, "LIVE" once started. */
+export function formatGameStart(startTimeIso: string, nowMs = Date.now(), timeZone?: string): string {
+  const start = new Date(startTimeIso);
+  if (start.getTime() <= nowMs) return "LIVE";
+  const dayKey = (date: Date) => date.toLocaleDateString("en-CA", { timeZone });
+  if (dayKey(start) === dayKey(new Date(nowMs))) return formatTimeToStart(startTimeIso, nowMs);
+  return formatGameDateTime(startTimeIso, timeZone);
+}
+
+/** Full start date and time, e.g. "Thu, Oct 1, 7:30 PM". */
+export function formatGameDateTime(startTimeIso: string, timeZone?: string): string {
+  return new Date(startTimeIso).toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
+}

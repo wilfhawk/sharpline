@@ -3,6 +3,7 @@ import {
   evColorClasses,
   formatAmericanOdds,
   formatEvPercent,
+  formatGameStart,
   formatTimeToStart,
 } from "./display";
 
@@ -51,6 +52,26 @@ describe("formatTimeToStart", () => {
 
   it("formats whole days only", () => {
     expect(formatTimeToStart("2026-10-01T12:00:00Z", now)).toBe("in 2d");
+  });
+});
+
+describe("formatGameStart", () => {
+  const now = new Date("2026-09-29T12:00:00Z").getTime();
+
+  it("shows a countdown on the day of the game", () => {
+    expect(formatGameStart("2026-09-29T15:15:00Z", now, "UTC")).toBe("in 3h 15m");
+  });
+
+  it("shows the date and time for a later day", () => {
+    expect(formatGameStart("2026-10-01T23:30:00Z", now, "UTC")).toMatch(/^Thu, Oct 1, 11:30\sPM$/);
+  });
+
+  it("treats just after midnight as the next day", () => {
+    expect(formatGameStart("2026-09-30T00:30:00Z", now, "UTC")).toMatch(/^Wed, Sep 30, 12:30\sAM$/);
+  });
+
+  it("returns LIVE once started", () => {
+    expect(formatGameStart("2026-09-29T11:00:00Z", now, "UTC")).toBe("LIVE");
   });
 });
 

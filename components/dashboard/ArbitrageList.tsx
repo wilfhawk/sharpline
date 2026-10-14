@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatAmericanOdds, formatTimeToStart } from "@/lib/display";
+import { formatAmericanOdds, formatGameStart } from "@/lib/display";
 import { useArbitrage } from "@/hooks/useArbitrage";
 import { ProFeatureUpsell } from "./ProFeatureUpsell";
 
@@ -51,7 +51,7 @@ export function ArbitrageList() {
                 {arb.event.awayTeam} @ {arb.event.homeTeam}
               </p>
               <p className="text-xs text-muted-foreground">
-                {formatTimeToStart(arb.event.startTime)}
+                {formatGameStart(arb.event.startTime)}
               </p>
             </div>
             <span className="shrink-0 rounded bg-emerald-500/10 px-1.5 py-0.5 text-sm font-medium tabular-nums text-emerald-400">

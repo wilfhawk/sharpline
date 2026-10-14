@@ -115,6 +115,30 @@ test("dashboard sports and sportsbooks selections filter results and persist", a
   await expect(page.getByRole("button", { name: "Sports", exact: true })).toContainText("All sports");
 });
 
+test("onboarding builds the dashboard from chosen sports", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/dashboard?tier=pro");
+  await page.getByRole("button", { name: "Choose sports" }).click();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole("button", { name: "NFL", exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: "NFL", exact: true }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("button", { name: "Build my dashboard" }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page.getByRole("button", { name: "Sports", exact: true })).toContainText("NFL");
+  await expect(page.getByText("Build your dashboard")).toHaveCount(0);
+});
+
+test("header All Games menu jumps to one sport", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/games");
+  await page.getByRole("button", { name: "All Games" }).first().click();
+  await page.getByRole("menuitem", { name: /^NFL/ }).click();
+  await expect(page).toHaveURL(/\/games\?league=NFL/);
+  await expect(page.getByRole("combobox", { name: "Sport", exact: true })).toHaveValue("NFL", { timeout: 60_000 });
+  await expect(page.getByRole("button", { name: /Chiefs|Bills|Eagles|Cowboys|49ers|Rams/ }).first()).toBeVisible();
+});
+
 test("any game can be looked up with predictions, even without an edge", async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto("/games?tier=pro");

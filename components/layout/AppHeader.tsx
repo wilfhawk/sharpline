@@ -2,13 +2,14 @@ import Link from "next/link";
 import { Menu, UserRound } from "lucide-react";
 import { Logo } from "./Logo";
 import { TierToggle } from "./TierToggle";
+import { GamesNavMenu } from "./GamesNavMenu";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard", className: "hidden sm:inline" },
-  { href: "/games", label: "All Games", className: "hidden sm:inline" },
+  { href: "/games", label: "All Games", className: "hidden sm:inline-flex" },
   { href: "/learn", label: "Learn", className: "hidden sm:inline" },
   { href: "/promos", label: "Promos", className: "hidden lg:inline" },
   { href: "/books", label: "My Books", className: "hidden lg:inline" },
@@ -55,15 +56,19 @@ export async function AppHeader() {
               Log in
             </Link>
           )}
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-muted-foreground hover:text-foreground ${link.className}`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) =>
+            link.href === "/games" ? (
+              <GamesNavMenu key={link.href} className={link.className} />
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-muted-foreground hover:text-foreground ${link.className}`}
+              >
+                {link.label}
+              </Link>
+            )
+          )}
           {!signedIn && (
             <Button size="sm" nativeButton={false} render={<Link href="/signup" />}>
               Sign up

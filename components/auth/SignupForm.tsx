@@ -80,7 +80,7 @@ export function SignupForm() {
     setShowAgeGate(false);
 
     if (data.session) {
-      router.push("/dashboard");
+      router.push("/onboarding");
     } else {
       setCheckEmail(true);
     }

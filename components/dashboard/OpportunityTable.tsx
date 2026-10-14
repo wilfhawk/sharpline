@@ -16,11 +16,11 @@ import {
   formatAmericanOdds,
   formatEvPercent,
   formatMarketType,
-  formatTimeToStart,
 } from "@/lib/display";
 import type { EvOpportunity } from "@/lib/types";
 import { groupOpportunitiesByEvent } from "@/lib/opportunity-groups";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
+import { GameStart } from "./GameStart";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { PredictionBadge } from "./PredictionPanel";
 
@@ -35,7 +35,7 @@ const COLUMNS: { key: SortKey; label: string; definition?: string }[] = [
       "Expected Value — the edge this price has over the sharp book's de-vigged fair odds. Positive EV% means this bet is mathematically profitable long-run.",
   },
   { key: "oddsDecimal", label: "Odds" },
-  { key: "startTime", label: "Time to start" },
+  { key: "startTime", label: "Starts" },
 ];
 
 function sortValue(o: EvOpportunity, key: SortKey): number | string {
@@ -82,22 +82,24 @@ export function OpportunityTable({
       <Table>
         <TableHeader className="sticky top-0 z-10 bg-card">
           <TableRow className="hover:bg-transparent">
-            {COLUMNS.map((col) => (
-              <TableHead key={col.key}>
-                <span className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort(col.key)}
-                    className="flex items-center gap-1 hover:text-foreground"
-                  >
-                    {col.label}
-                    <SortIcon active={sortKey === col.key} dir={sortDir} />
-                  </button>
-                  {col.definition && <InfoTooltip>{col.definition}</InfoTooltip>}
-                </span>
-              </TableHead>
+            {COLUMNS.map((col, index) => (
+              <Fragment key={col.key}>
+                <TableHead>
+                  <span className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort(col.key)}
+                      className="flex items-center gap-1 hover:text-foreground"
+                    >
+                      {col.label}
+                      <SortIcon active={sortKey === col.key} dir={sortDir} />
+                    </button>
+                    {col.definition && <InfoTooltip>{col.definition}</InfoTooltip>}
+                  </span>
+                </TableHead>
+                {index === 0 && <TableHead>Bet on</TableHead>}
+              </Fragment>
             ))}
-            <TableHead>Market</TableHead>
             <TableHead>Sportsbook</TableHead>
             <TableHead>
               <span className="flex items-center gap-1">
@@ -124,11 +126,18 @@ export function OpportunityTable({
                     setExpandedOpportunityId(null);
                   }}
                 >
-                  <TableCell className="max-w-56 truncate font-medium">
-                    {o.event.awayTeam} @ {o.event.homeTeam}
-                    <div className="text-xs text-muted-foreground">
+                  <TableCell className="max-w-56 font-medium">
+                    <span className="mb-0.5 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                      {o.event.league}
+                    </span>
+                    <div className="truncate">{o.event.awayTeam} @ {o.event.homeTeam}</div>
+                    <div className="text-xs font-normal text-muted-foreground">
                       Best EV · {group.opportunities.length} {group.opportunities.length === 1 ? "offer" : "offers"}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-semibold text-emerald-500">{o.sideLabel}</div>
+                    <div className="text-xs text-muted-foreground">{formatMarketType(o.market.marketType)}</div>
                   </TableCell>
                   <TableCell className="tabular-nums">
                     <span
@@ -142,10 +151,9 @@ export function OpportunityTable({
                     {formatAmericanOdds(o.oddsDecimal)}
                   </TableCell>
                   <TableCell className="tabular-nums whitespace-nowrap">
-                    <LiveOrTimeToStart status={o.event.status} startTime={o.event.startTime} />
+                    <GameStart status={o.event.status} startTime={o.event.startTime} />
                   </TableCell>
-                  <TableCell>{formatMarketType(o.market.marketType)}</TableCell>
-                  <TableCell>{o.sportsbook.name}</TableCell>
+                  <TableCell className="font-medium">{o.sportsbook.name}</TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">
                     {formatAmericanOdds(o.fairOddsDecimal)}
                   </TableCell>
@@ -211,24 +219,5 @@ function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
     <ChevronUp className="size-3" />
   ) : (
     <ChevronDown className="size-3" />
-  );
-}
-
-export function LiveOrTimeToStart({
-  status,
-  startTime,
-}: {
-  status: EvOpportunity["event"]["status"];
-  startTime: string;
-}) {
-  if (status !== "live") return <>{formatTimeToStart(startTime)}</>;
-  return (
-    <span className="inline-flex items-center gap-1.5 font-medium text-red-400">
-      <span className="relative flex size-1.5">
-        <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-75" />
-        <span className="relative inline-flex size-1.5 rounded-full bg-red-400" />
-      </span>
-      LIVE
-    </span>
   );
 }

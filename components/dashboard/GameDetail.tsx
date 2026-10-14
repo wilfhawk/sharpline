@@ -8,7 +8,7 @@ import { useTierPreview } from "@/hooks/useTierPreview";
 import { useDashboardProfile } from "@/hooks/useDashboardProfile";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { evColorClasses, formatAmericanOdds, formatEvPercent, formatMarketType, formatTimeToStart } from "@/lib/display";
+import { evColorClasses, formatAmericanOdds, formatEvPercent, formatMarketType, formatGameStart } from "@/lib/display";
 import type { GamePredictionView, GameSidePrediction } from "@/lib/game-predictions";
 import type { SubscriptionTier } from "@/lib/types";
 import { PredictionBadge, PredictionPanel } from "./PredictionPanel";
@@ -51,7 +51,7 @@ export function GameDetail({ eventId }: { eventId: string }) {
         <>
           <div>
             <p className="text-xs text-muted-foreground">
-              {data.event.league} · {data.event.status === "live" ? "LIVE" : formatTimeToStart(data.event.startTime)} · {new Date(data.event.startTime).toLocaleString()}
+              {data.event.league} · {formatGameStart(data.event.startTime)} · {new Date(data.event.startTime).toLocaleString()}
             </p>
             <h1 className="mt-1 text-2xl font-semibold">{data.event.awayTeam} @ {data.event.homeTeam}</h1>
             <p className="mt-2 text-sm text-muted-foreground">

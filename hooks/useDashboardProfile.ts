@@ -11,6 +11,16 @@ interface ProfileState {
   profile: DashboardProfile;
   /** True when signed in, so changes are also saved to the account. */
   synced: boolean;
+  /** False until the viewer has chosen (or skipped) their sports and sportsbooks. */
+  onboarded: boolean;
+}
+
+function hasLocal(): boolean {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
 }
 
 function readLocal(): DashboardProfile {
@@ -44,6 +54,7 @@ async function pushToAccount(profile: DashboardProfile): Promise<boolean> {
 
 async function loadProfile(): Promise<ProfileState> {
   const local = readLocal();
+  const onboardedLocally = hasLocal();
   try {
     const response = await fetch("/api/profile");
     if (response.ok) {
@@ -51,16 +62,16 @@ async function loadProfile(): Promise<ProfileState> {
       if (body.profile) {
         const profile = sanitizeProfile(body.profile);
         writeLocal(profile);
-        return { profile, synced: true };
+        return { profile, synced: true, onboarded: true };
       }
       // Signed in with nothing saved yet: promote this device's choices to the account.
       if (local.leagues.length > 0 || local.sportsbooks.length > 0) await pushToAccount(local);
-      return { profile: local, synced: true };
+      return { profile: local, synced: true, onboarded: onboardedLocally };
     }
   } catch {
     // Offline or not configured: fall back to this device.
   }
-  return { profile: local, synced: false };
+  return { profile: local, synced: false, onboarded: onboardedLocally };
 }
 
 /**
@@ -77,7 +88,7 @@ export function useDashboardProfile() {
       const clean = sanitizeProfile(next);
       writeLocal(clean);
       const synced = queryClient.getQueryData<ProfileState>(QUERY_KEY)?.synced ?? false;
-      queryClient.setQueryData<ProfileState>(QUERY_KEY, { profile: clean, synced });
+      queryClient.setQueryData<ProfileState>(QUERY_KEY, { profile: clean, synced, onboarded: true });
       if (synced) void pushToAccount(clean);
     },
     [queryClient]
@@ -86,6 +97,7 @@ export function useDashboardProfile() {
   return {
     profile: state?.profile ?? EMPTY_PROFILE,
     synced: state?.synced ?? false,
+    onboarded: state?.onboarded ?? true,
     isReady: query.isFetched,
     save,
   };

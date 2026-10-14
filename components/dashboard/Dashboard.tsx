@@ -17,13 +17,14 @@ import { SgpBuilder } from "./SgpBuilder";
 import { AlertSettings } from "./AlertSettings";
 import { ProFeatureUpsell } from "./ProFeatureUpsell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupOpportunitiesByEvent } from "@/lib/opportunity-groups";
 import { useDashboardProfile } from "@/hooks/useDashboardProfile";
 
 export function Dashboard() {
   const [baseFilters, setFilters] = useState<OpportunityFilters>({ minEv: 2 });
-  const { profile, synced, isReady, save } = useDashboardProfile();
+  const { profile, synced, isReady, onboarded, save } = useDashboardProfile();
   // The profile (sports + sportsbooks) is always applied; empty means all.
   const filters = useMemo<OpportunityFilters>(
     () => ({ ...baseFilters, leagues: profile.leagues, sportsbookSlugs: profile.sportsbooks }),
@@ -56,6 +57,19 @@ export function Dashboard() {
       {data?.meta.tier === "free" && <FreeTierBanner />}
       {data && <p className="text-xs text-muted-foreground">Snapshot: {new Date(data.meta.capturedAt).toLocaleString()}</p>}
       {data?.meta.warnings.map((warning) => <p key={warning} role="status" className="text-sm text-amber-600 dark:text-amber-300">{warning}</p>)}
+
+      {isReady && !onboarded && (
+        <div className="flex flex-col gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-medium">Build your dashboard</p>
+            <p className="text-sm text-muted-foreground">Choose the sports and sportsbooks you bet and we will only show those.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" nativeButton={false} render={<Link href="/onboarding" />}>Choose sports</Button>
+            <Button size="sm" variant="ghost" onClick={() => save({ leagues: [], sportsbooks: [] })}>Show everything</Button>
+          </div>
+        </div>
+      )}
 
       <ProfileBar
         leagues={leagues}

@@ -11,7 +11,7 @@ import {
 } from "@/lib/display";
 import type { EventOpportunityGroup } from "@/lib/opportunity-groups";
 import { ExpandedRowDetail } from "./ExpandedRowDetail";
-import { LiveOrTimeToStart } from "./OpportunityTable";
+import { GameStart } from "./GameStart";
 import { PredictionBadge } from "./PredictionPanel";
 
 export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
@@ -23,8 +23,16 @@ export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
     <Card className="gap-3 p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
+          <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+            {opportunity.event.league}
+          </span>
           <p className="truncate font-medium">
             {opportunity.event.awayTeam} @ {opportunity.event.homeTeam}
+          </p>
+          <p className="text-sm">
+            <span className="text-muted-foreground">Bet </span>
+            <span className="font-semibold text-emerald-500">{opportunity.sideLabel}</span>
+            <span className="text-muted-foreground"> at {opportunity.sportsbook.name}</span>
           </p>
           <p className="text-xs text-muted-foreground">
             Best EV · {group.opportunities.length} {group.opportunities.length === 1 ? "offer" : "offers"}
@@ -56,7 +64,7 @@ export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
         <span>Odds {formatAmericanOdds(opportunity.oddsDecimal)}</span>
         <span>Fair {formatAmericanOdds(opportunity.fairOddsDecimal)}</span>
         <span>
-          <LiveOrTimeToStart
+          <GameStart
             status={opportunity.event.status}
             startTime={opportunity.event.startTime}
           />

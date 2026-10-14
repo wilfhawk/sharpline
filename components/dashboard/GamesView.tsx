@@ -1,36 +1,25 @@
 "use client";
 
 import { useDeferredValue, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Search, RefreshCw } from "lucide-react";
-import { useTierPreview } from "@/hooks/useTierPreview";
+import { useGameCatalog } from "@/hooks/useGameCatalog";
 import { useMarketComparison } from "@/hooks/useMarketComparison";
 import type { CatalogGame } from "@/lib/game-catalog";
-import type { SubscriptionTier } from "@/lib/types";
 import { formatAmericanOdds, formatEvPercent } from "@/lib/display";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { GameStart } from "./GameStart";
 
 const selectClass = "h-9 min-w-0 rounded-md border border-input bg-background px-3 text-sm";
-interface CatalogResponse { games: CatalogGame[]; meta: { tier: SubscriptionTier; isMock: boolean; capturedAt: string; warnings: string[] } }
 
-export function GamesView({ initialSearch = "" }: { initialSearch?: string }) {
-  const { tierPreview } = useTierPreview();
-  const [league, setLeague] = useState("");
+export function GamesView({ initialSearch = "", initialLeague = "" }: { initialSearch?: string; initialLeague?: string }) {
+  const [league, setLeague] = useState(initialLeague);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState(initialSearch);
   const [expanded, setExpanded] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
-  const query = useQuery<CatalogResponse>({
-    queryKey: ["games", tierPreview],
-    queryFn: async () => {
-      const response = await fetch(`/api/games${tierPreview ? `?tier=${tierPreview}` : ""}`);
-      if (!response.ok) throw new Error("Games are temporarily unavailable.");
-      return response.json();
-    },
-    refetchInterval: 30_000,
-  });
+  const query = useGameCatalog({ refetchInterval: 30_000 });
   const games = query.data?.games ?? [];
   const leagues = [...new Set(games.map((game) => game.league))].sort();
   const options = ["", ...leagues];
@@ -55,7 +44,7 @@ export function GamesView({ initialSearch = "" }: { initialSearch?: string }) {
       <p className="text-xs text-muted-foreground">{visible.length} matching games</p>
       <div className="divide-y divide-border border-y border-border">{visible.map((game) => <section key={game.id}>
         <button className="flex w-full items-center justify-between gap-4 py-4 text-left" aria-expanded={expanded === game.id} onClick={() => setExpanded(expanded === game.id ? null : game.id)}>
-          <span className="min-w-0"><span className="block text-xs text-muted-foreground">{game.league} <span className={game.status === "live" ? "text-rose-500" : ""}>{game.status === "live" ? " / LIVE" : ""}</span></span><span className="mt-1 block break-words font-medium">{game.awayTeam} @ {game.homeTeam}</span><span className="mt-1 block text-xs text-muted-foreground">{new Date(game.startTime).toLocaleString()} / {game.markets.length} markets</span></span>
+          <span className="min-w-0"><span className="block text-xs font-semibold tracking-wide text-muted-foreground uppercase">{game.league}</span><span className="mt-1 block break-words font-medium">{game.awayTeam} @ {game.homeTeam}</span><span className="mt-1 block text-xs text-muted-foreground"><GameStart status={game.status} startTime={game.startTime} /> / {game.markets.length} markets</span></span>
           {expanded === game.id ? <ChevronUp className="size-4 shrink-0" /> : <ChevronDown className="size-4 shrink-0" />}
         </button>
         {expanded === game.id && <div className="space-y-3 pb-5"><Link href={`/games/${encodeURIComponent(game.id)}`} className="inline-block text-sm font-medium text-primary underline">View predictions for this game</Link>{query.data.meta.tier === "free" ? <p className="text-sm text-muted-foreground"><Link href="/account" className="underline">Plus or Pro</Link> includes all market prices and comparisons.</p> : <GamePrices game={game} />}</div>}
