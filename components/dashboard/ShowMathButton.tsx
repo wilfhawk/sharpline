@@ -28,13 +28,13 @@ export function ShowMathButton({ opportunity }: { opportunity: EvOpportunity }) 
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>How this EV% was calculated</DialogTitle>
+          <DialogTitle>How this edge was calculated</DialogTitle>
         </DialogHeader>
         <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-sm">
-          <dt className="text-muted-foreground">Sharp book fair probability</dt>
+          <dt className="text-muted-foreground">True chance of winning</dt>
           <dd className="text-right tabular-nums">{fairProbabilityPercent}%</dd>
 
-          <dt className="text-muted-foreground">Fair odds (de-vigged)</dt>
+          <dt className="text-muted-foreground">True odds (what it should pay)</dt>
           <dd className="text-right tabular-nums">
             {formatAmericanOdds(opportunity.fairOddsDecimal)}
           </dd>
@@ -47,7 +47,7 @@ export function ShowMathButton({ opportunity }: { opportunity: EvOpportunity }) 
           </dd>
 
           <dt className="col-span-2 mt-1 border-t border-border/60 pt-1.5 text-muted-foreground">
-            EV% = (fair probability × odds taken − 1) × 100
+            Edge = (true chance × odds taken − 1) × 100
           </dt>
           <dd className="col-span-2 text-right font-medium tabular-nums">
             ({fairProbabilityPercent}% × {opportunity.oddsDecimal.toFixed(2)} − 1) × 100 ={" "}

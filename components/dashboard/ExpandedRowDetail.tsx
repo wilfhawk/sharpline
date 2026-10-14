@@ -46,7 +46,7 @@ export function ExpandedRowDetail({ opportunity }: { opportunity: EvOpportunity 
 
   return (
     <div className="grid gap-6 border-t border-border/60 bg-muted/20 p-4 sm:grid-cols-2">
-      {opportunity.referenceBook && <p className="text-xs text-muted-foreground sm:col-span-2">Reference: {opportunity.referenceBook} / {opportunity.devigMethod} / {opportunity.referenceTimestamp ? new Date(opportunity.referenceTimestamp).toLocaleString() : "Timestamp unavailable"}</p>}
+      {opportunity.referenceBook && <p className="text-xs text-muted-foreground sm:col-span-2">True odds based on {opportunity.referenceBook}, updated {opportunity.referenceTimestamp ? new Date(opportunity.referenceTimestamp).toLocaleString() : "time unavailable"}.</p>}
       <div>
         <h4 className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           {opportunity.market.sideALabel}

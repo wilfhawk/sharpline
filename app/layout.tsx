@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SharpLine — Find +EV betting opportunities",
   description:
-    "SharpLine compares U.S. sportsbook odds against de-vigged Pinnacle fair odds to surface positive expected value betting opportunities.",
+    "SharpLine compares U.S. sportsbook odds against the true odds from the sharpest bookmaker to surface positive expected value betting opportunities.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

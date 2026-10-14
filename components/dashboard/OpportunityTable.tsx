@@ -24,17 +24,16 @@ import { GameStart } from "./GameStart";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { PredictionBadge } from "./PredictionPanel";
 
-type SortKey = "event" | "evPercent" | "oddsDecimal" | "startTime";
+type SortKey = "event" | "evPercent" | "startTime";
 
 const COLUMNS: { key: SortKey; label: string; definition?: string }[] = [
-  { key: "event", label: "Event" },
+  { key: "event", label: "Game" },
   {
     key: "evPercent",
-    label: "EV%",
+    label: "Edge",
     definition:
-      "Expected Value — the edge this price has over the sharp book's de-vigged fair odds. Positive EV% means this bet is mathematically profitable long-run.",
+      "How much better this price is than the true odds. +5% means you would expect to win about $5 for every $100 bet, on average over many bets.",
   },
-  { key: "oddsDecimal", label: "Odds" },
   { key: "startTime", label: "Starts" },
 ];
 
@@ -44,8 +43,6 @@ function sortValue(o: EvOpportunity, key: SortKey): number | string {
       return `${o.event.homeTeam} ${o.event.awayTeam}`;
     case "evPercent":
       return o.evPercent;
-    case "oddsDecimal":
-      return o.oddsDecimal;
     case "startTime":
       return new Date(o.event.startTime).getTime();
   }
@@ -100,16 +97,6 @@ export function OpportunityTable({
                 {index === 0 && <TableHead>Bet on</TableHead>}
               </Fragment>
             ))}
-            <TableHead>Sportsbook</TableHead>
-            <TableHead>
-              <span className="flex items-center gap-1">
-                Fair Odds
-                <InfoTooltip>
-                  The sharp book&apos;s (e.g. Pinnacle) de-vigged odds — the
-                  benchmark &quot;true&quot; price this opportunity is compared against.
-                </InfoTooltip>
-              </span>
-            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -123,7 +110,7 @@ export function OpportunityTable({
                   aria-expanded={isExpanded}
                   onClick={() => {
                     setExpandedEventId(isExpanded ? null : group.eventId);
-                    setExpandedOpportunityId(null);
+                    setExpandedOpportunityId(isExpanded ? null : o.id);
                   }}
                 >
                   <TableCell className="max-w-56 font-medium">
@@ -132,12 +119,14 @@ export function OpportunityTable({
                     </span>
                     <div className="truncate">{o.event.awayTeam} @ {o.event.homeTeam}</div>
                     <div className="text-xs font-normal text-muted-foreground">
-                      Best EV · {group.opportunities.length} {group.opportunities.length === 1 ? "offer" : "offers"}
+                      Best of {group.opportunities.length} {group.opportunities.length === 1 ? "price" : "prices"}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="font-semibold text-emerald-500">{o.sideLabel}</div>
-                    <div className="text-xs text-muted-foreground">{formatMarketType(o.market.marketType)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatAmericanOdds(o.oddsDecimal)} at {o.sportsbook.name} · {formatMarketType(o.market.marketType)}
+                    </div>
                   </TableCell>
                   <TableCell className="tabular-nums">
                     <span
@@ -147,20 +136,13 @@ export function OpportunityTable({
                     </span>
                     <div className="mt-1"><PredictionBadge prediction={o.prediction} /></div>
                   </TableCell>
-                  <TableCell className="tabular-nums">
-                    {formatAmericanOdds(o.oddsDecimal)}
-                  </TableCell>
                   <TableCell className="tabular-nums whitespace-nowrap">
                     <GameStart status={o.event.status} startTime={o.event.startTime} />
-                  </TableCell>
-                  <TableCell className="font-medium">{o.sportsbook.name}</TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">
-                    {formatAmericanOdds(o.fairOddsDecimal)}
                   </TableCell>
                 </TableRow>
                 {isExpanded && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={7} className="p-0">
+                    <TableCell colSpan={4} className="p-0">
                       <div className="divide-y divide-border/60 bg-muted/20">
                         {group.opportunities.map((offer) => {
                           const offerExpanded = expandedOpportunityId === offer.id;

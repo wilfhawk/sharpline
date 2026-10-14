@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -17,7 +20,7 @@ import { formatMarketType } from "@/lib/display";
 const EV_THRESHOLDS = [0, 2, 3, 5, 10];
 
 function evLabel(threshold: number): string {
-  return threshold === 0 ? "All best odds" : `Min +${threshold}% EV`;
+  return threshold === 0 ? "All best odds" : `Min edge ${threshold}%`;
 }
 
 const ALL = "all";
@@ -36,6 +39,7 @@ export function FilterBar({
   tier,
 }: FilterBarProps) {
   const isPro = tier === "pro";
+  const [showMore, setShowMore] = useState(false);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -74,6 +78,19 @@ export function FilterBar({
         </SelectContent>
       </Select>
 
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        aria-expanded={showMore}
+        onClick={() => setShowMore((current) => !current)}
+      >
+        <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+        {showMore ? "Fewer filters" : "More filters"}
+      </Button>
+
+      {showMore && (
+        <>
       <label className="flex items-center gap-2 rounded-md border border-border/60 px-3 py-2 text-sm">
         <Checkbox
           checked={filters.liveOnly ?? false}
@@ -106,21 +123,23 @@ export function FilterBar({
           }
           disabled={!isPro}
         >
-          <SelectTrigger aria-label="De-vig model" className="w-44">
-            <SelectValue>{isPro && filters.devigMethod === "power" ? "Power model" : "Multiplicative model"}</SelectValue>
+          <SelectTrigger aria-label="Odds method" className="w-44">
+            <SelectValue>{isPro && filters.devigMethod === "power" ? "Method B (power)" : "Method A (standard)"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="multiplicative">Multiplicative model</SelectItem>
-            <SelectItem value="power">Power model</SelectItem>
+            <SelectItem value="multiplicative">Method A (standard)</SelectItem>
+            <SelectItem value="power">Method B (power)</SelectItem>
           </SelectContent>
         </Select>
         {!isPro && (
           <InfoTooltip>
-            Choosing the de-vig model used to compute fair odds (multiplicative vs.
-            power) is a Pro feature.
+            Two ways to work out the true odds from the benchmark. Method A is the
+            standard; choosing Method B is a Pro feature.
           </InfoTooltip>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

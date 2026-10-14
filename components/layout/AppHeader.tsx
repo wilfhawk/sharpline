@@ -3,6 +3,7 @@ import { Menu, UserRound } from "lucide-react";
 import { Logo } from "./Logo";
 import { TierToggle } from "./TierToggle";
 import { GamesNavMenu } from "./GamesNavMenu";
+import { MoreNavMenu } from "./MoreNavMenu";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -11,10 +12,14 @@ const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard", className: "hidden sm:inline" },
   { href: "/games", label: "All Games", className: "hidden sm:inline-flex" },
   { href: "/learn", label: "Learn", className: "hidden sm:inline" },
-  { href: "/promos", label: "Promos", className: "hidden lg:inline" },
-  { href: "/books", label: "My Books", className: "hidden lg:inline" },
-  { href: "/methodology", label: "Methodology", className: "hidden lg:inline" },
-  { href: "/status", label: "Status", className: "hidden xl:inline" },
+  { href: "/pricing", label: "Pricing", className: "hidden sm:inline" },
+];
+
+const MORE_LINKS = [
+  { href: "/promos", label: "Promo converter" },
+  { href: "/books", label: "My Books" },
+  { href: "/learn/earnings", label: "Earnings & Risk" },
+  { href: "/methodology", label: "Methodology" },
 ];
 
 export async function AppHeader() {
@@ -37,7 +42,7 @@ export async function AppHeader() {
           <TierToggle />
         </div>
         <nav className="flex items-center gap-3 text-sm sm:gap-4">
-          <details className="relative sm:hidden"><summary aria-label="Navigation menu" className="cursor-pointer list-none p-1"><Menu className="size-5" /></summary><div className="absolute right-0 top-9 z-30 flex w-44 flex-col gap-3 rounded-md border bg-background p-4 shadow-lg">{NAV_LINKS.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}<Link href="/learn/earnings">Earnings & Risk</Link><Link href={signedIn ? "/account" : "/login"}>{signedIn ? "Account" : "Log in"}</Link></div></details>
+          <details className="relative sm:hidden"><summary aria-label="Navigation menu" className="cursor-pointer list-none p-1"><Menu className="size-5" /></summary><div className="absolute right-0 top-9 z-30 flex w-44 flex-col gap-3 rounded-md border bg-background p-4 shadow-lg">{NAV_LINKS.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}{MORE_LINKS.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}<Link href={signedIn ? "/account" : "/login"}>{signedIn ? "Account" : "Log in"}</Link></div></details>
           {signedIn ? (
             <Link
               href="/account"
@@ -69,6 +74,7 @@ export async function AppHeader() {
               </Link>
             )
           )}
+          <MoreNavMenu links={MORE_LINKS} className="hidden sm:inline-flex" />
           {!signedIn && (
             <Button size="sm" nativeButton={false} render={<Link href="/signup" />}>
               Sign up

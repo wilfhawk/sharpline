@@ -35,6 +35,7 @@ export function PredictionBadge({ prediction }: { prediction?: OpportunityPredic
 interface ExplainResponse {
   explanation: Explanation;
   source: ExplanationSource;
+  reason?: string;
 }
 
 const EFFECT_CLASS = {
@@ -111,7 +112,11 @@ export function PredictionPanel({ opportunity }: { opportunity: EvOpportunity })
                 </ul>
                 <p className="text-xs text-muted-foreground">
                   {explanation.data.explanation.caveat}
-                  {explanation.data.source === "gemini" ? " Explanation written by AI from the numbers above." : ""}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {explanation.data.source === "gemini"
+                    ? "Explanation written by Gemini AI from the numbers above."
+                    : `Standard summary (AI explanation unavailable${explanation.data.reason ? `: ${explanation.data.reason}` : ""}).`}
                 </p>
               </>
             )}

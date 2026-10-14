@@ -4,7 +4,7 @@ import { readFeed } from "@/lib/feed";
 import { enforcePublicRateLimit } from "@/lib/api-rate-limit";
 import type { NextRequest } from "next/server";
 
-/** Public health-check endpoint backing the /status page — no auth required. */
+/** Public health-check endpoint for uptime monitors — no auth required. */
 export async function GET(request: NextRequest) {
   const limited = await enforcePublicRateLimit(request, "health", 30);
   if (limited) return limited;

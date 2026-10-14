@@ -35,7 +35,7 @@ export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
             <span className="text-muted-foreground"> at {opportunity.sportsbook.name}</span>
           </p>
           <p className="text-xs text-muted-foreground">
-            Best EV · {group.opportunities.length} {group.opportunities.length === 1 ? "offer" : "offers"}
+            Best of {group.opportunities.length} {group.opportunities.length === 1 ? "price" : "prices"}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -51,7 +51,7 @@ export function OpportunityCard({ group }: { group: EventOpportunityGroup }) {
             aria-expanded={expanded}
             onClick={() => {
               setExpanded((current) => !current);
-              setExpandedOpportunityId(null);
+              setExpandedOpportunityId(expanded ? null : opportunity.id);
             }}
             className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >

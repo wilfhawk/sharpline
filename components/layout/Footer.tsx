@@ -38,9 +38,6 @@ export function Footer() {
           <Link href="/methodology" className="hover:text-foreground">
             Methodology
           </Link>
-          <Link href="/status" className="hover:text-foreground">
-            Status
-          </Link>
           <Link href="/changelog" className="hover:text-foreground">
             Changelog
           </Link>

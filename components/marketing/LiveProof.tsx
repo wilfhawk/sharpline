@@ -25,7 +25,7 @@ async function getJson<T>(url: string): Promise<T> {
 const CHECKS = [
   "Every edge names its reference book and the time of its price.",
   "Stale and invalid quotes are dropped before anything is scored.",
-  "The de-vig method is shown, and Pro can switch between two models.",
+  "The method used to work out the true odds is shown, and Pro can switch between two.",
   "Log a bet and we track its closing line value, so you can check the edge yourself.",
 ];
 

@@ -76,8 +76,7 @@ test("dashboard exposes player props with a market consensus reference", async (
   await page.getByRole("option", { name: "Player prop" }).click();
   await expect(page.getByText("Showing sample data")).toBeVisible();
   await page.getByRole("row").nth(1).click();
-  await page.getByRole("button", { name: /Over|Under/ }).first().click();
-  await expect(page.getByText(/Reference: Market consensus \(\d+ books\)/)).toBeVisible();
+  await expect(page.getByText(/True odds based on Market consensus \(\d+ books\)/)).toBeVisible();
   await expect(page.getByRole("link", { name: /^Bet at / })).toBeVisible();
 });
 
@@ -137,6 +136,18 @@ test("header All Games menu jumps to one sport", async ({ page }) => {
   await expect(page).toHaveURL(/\/games\?league=NFL/);
   await expect(page.getByRole("combobox", { name: "Sport", exact: true })).toHaveValue("NFL", { timeout: 60_000 });
   await expect(page.getByRole("button", { name: /Chiefs|Bills|Eagles|Cowboys|49ers|Rams/ }).first()).toBeVisible();
+});
+
+test("pricing page compares plans feature by feature", async ({ page }) => {
+  await page.goto("/pricing");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Pick the plan");
+  const table = page.getByRole("table");
+  await expect(table.getByRole("columnheader", { name: /Pro/ })).toBeVisible();
+  const row = table.getByRole("row", { name: /Arbitrage finder/ });
+  await expect(row.getByText("Not included")).toHaveCount(2);
+  await expect(row.getByText("Included", { exact: true })).toHaveCount(1);
+  await page.getByRole("button", { name: "Monthly" }).click();
+  await expect(page.getByText("$49").first()).toBeVisible();
 });
 
 test("any game can be looked up with predictions, even without an edge", async ({ page }) => {

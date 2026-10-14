@@ -16,7 +16,7 @@ const bodySchema = z.object({
 
 const CACHE_TTL_MS = 15 * 60_000;
 const CACHE_MAX = 200;
-const cache = new Map<string, { expires: number; value: { explanation: Explanation; source: ExplanationSource } }>();
+const cache = new Map<string, { expires: number; value: { explanation: Explanation; source: ExplanationSource; reason?: string } }>();
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,8 +67,10 @@ export async function POST(request: NextRequest) {
       hoursToStart: prediction.features.hoursToStart,
     });
 
-    if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string);
-    cache.set(cacheKey, { expires: Date.now() + CACHE_TTL_MS, value: result });
+    if (result.source === "gemini") {
+      if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string);
+      cache.set(cacheKey, { expires: Date.now() + CACHE_TTL_MS, value: result });
+    }
     return NextResponse.json(result);
   } catch (error) {
     console.error("prediction_explain_failed", error instanceof Error ? error.message : "Unknown error");

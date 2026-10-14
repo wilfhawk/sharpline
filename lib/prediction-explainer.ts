@@ -103,6 +103,8 @@ export function buildTemplateExplanation(input: ExplainInput): Explanation {
   };
 }
 
+const DEFAULT_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+
 interface GeminiResponse {
   candidates?: { content?: { parts?: { text?: string }[] } }[];
 }
@@ -110,34 +112,61 @@ interface GeminiResponse {
 export async function explainPrediction(
   input: ExplainInput,
   options: { apiKey?: string; model?: string; fetchImpl?: typeof fetch; timeoutMs?: number } = {}
-): Promise<{ explanation: Explanation; source: ExplanationSource }> {
-  const fallback = { explanation: buildTemplateExplanation(input), source: "template" as const };
+): Promise<{ explanation: Explanation; source: ExplanationSource; reason?: string }> {
+  const template = { explanation: buildTemplateExplanation(input), source: "template" as const };
   const apiKey = options.apiKey ?? process.env.GEMINI_API_KEY;
-  if (!apiKey) return fallback;
+  if (!apiKey) return { ...template, reason: "no_api_key" };
 
-  const model = options.model ?? process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  const requested = options.model ?? process.env.GEMINI_MODEL;
+  const models = [...new Set([requested, ...DEFAULT_MODELS].filter((model): model is string => Boolean(model)))];
   const doFetch = options.fetchImpl ?? fetch;
-  try {
-    const response = await doFetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-      {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [{ role: "user", parts: [{ text: JSON.stringify(buildPromptPayload(input)) }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.2, maxOutputTokens: 500 },
-        }),
-        signal: AbortSignal.timeout(options.timeoutMs ?? 8_000),
+  let reason = "unknown";
+
+  for (const model of models) {
+    try {
+      const response = await doFetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [{ role: "user", parts: [{ text: JSON.stringify(buildPromptPayload(input)) }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.2,
+              maxOutputTokens: 800,
+              // 2.5 models spend output tokens on thinking by default, which can leave no room for the JSON.
+              ...(model.startsWith("gemini-2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+            },
+          }),
+          signal: AbortSignal.timeout(options.timeoutMs ?? 8_000),
+        }
+      );
+      if (!response.ok) {
+        reason = `http_${response.status}`;
+        const detail = await response.text().catch(() => "");
+        console.error("gemini_explain_failed", model, response.status, detail.slice(0, 200));
+        // Retired or unavailable models are 404 (or 400 for unsupported options); try the next one.
+        if (response.status === 404 || response.status === 400) continue;
+        break;
       }
-    );
-    if (!response.ok) return fallback;
-    const body = (await response.json()) as GeminiResponse;
-    const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return fallback;
-    const parsed = explanationSchema.safeParse(JSON.parse(text));
-    return parsed.success ? { explanation: parsed.data, source: "gemini" } : fallback;
-  } catch {
-    return fallback;
+      const body = (await response.json()) as GeminiResponse;
+      const text = body.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("");
+      if (!text) {
+        reason = "empty_response";
+        console.error("gemini_explain_failed", model, reason);
+        continue;
+      }
+      const parsed = explanationSchema.safeParse(JSON.parse(text));
+      if (parsed.success) return { explanation: parsed.data, source: "gemini" };
+      reason = "invalid_response";
+      console.error("gemini_explain_failed", model, reason);
+    } catch (error) {
+      reason = "network_error";
+      console.error("gemini_explain_failed", model, error instanceof Error ? error.message : "unknown");
+      break;
+    }
   }
+  return { ...template, reason };
 }

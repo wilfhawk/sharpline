@@ -8,7 +8,7 @@ interface ComparisonRow {
 }
 
 const ROWS: ComparisonRow[] = [
-  { label: "De-vigged Pinnacle fair-odds benchmark", sharpline: true, competitors: true },
+  { label: "True-odds benchmark (Pinnacle with its fee removed)", sharpline: true, competitors: true },
   { label: "Multiple sharp references (Circa, BetOnline fallback)", sharpline: true, competitors: false },
   { label: "Cross-book arbitrage finder", sharpline: true, competitors: true },
   { label: "Middles finder", sharpline: true, competitors: false },

@@ -28,15 +28,15 @@ const FEATURES = [
   },
   {
     icon: LineChart,
-    title: "De-vigged Pinnacle benchmark",
+    title: "A true-odds benchmark",
     description:
-      "We strip Pinnacle's vig with the multiplicative or power method to get a true, sharp-market probability for every line.",
+      "Pinnacle is the bookmaker sharp bettors trust most. We take its odds, remove its built-in fee, and treat the result as the true chance of each outcome.",
   },
   {
     icon: TrendingUp,
     title: "Ranked by real edge",
     description:
-      "Every price is scored against fair odds and sorted by EV%, so the best opportunities always float to the top.",
+      "Every price is compared with the true odds and sorted by edge, so the bets paying the most above fair value float to the top.",
   },
   {
     icon: Gift,
@@ -72,6 +72,12 @@ export default function LandingPage() {
           <Logo />
           <nav className="flex items-center gap-2 text-sm sm:gap-3">
             <Link
+              href="/pricing"
+              className="hidden text-muted-foreground hover:text-foreground sm:inline"
+            >
+              Pricing
+            </Link>
+            <Link
               href="/learn"
               className="hidden text-muted-foreground hover:text-foreground sm:inline"
             >
@@ -91,16 +97,17 @@ export default function LandingPage() {
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
             </span>
-            De-vigged Pinnacle fair odds, live
+            Spot bets that pay more than they should
           </span>
           <h1 className="max-w-2xl text-3xl leading-[1.15] font-semibold tracking-tight sm:text-6xl">
             Find <span className="text-primary">+EV</span> betting
             opportunities before the market catches up.
           </h1>
           <p className="max-w-xl text-balance text-muted-foreground sm:text-lg">
-            SharpLine compares U.S. sportsbook odds against a de-vigged
-            Pinnacle benchmark in real time, surfacing statistical edges the
-            moment they appear — dense, fast, and built for serious bettors.
+            SharpLine checks every U.S. sportsbook&apos;s odds against the
+            true odds set by the sharpest bookmaker, and shows you which bet
+            to make, where, and how big the edge is. Simple, fast, and no
+            math required.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button
@@ -182,6 +189,9 @@ export default function LandingPage() {
           </p>
         </div>
         <PricingSection />
+        <p className="mt-4 text-center text-sm">
+          <Link href="/pricing" className="text-primary underline">Compare every feature across plans</Link>
+        </p>
         <div className="mt-8">
           <DemoLauncher compact />
         </div>

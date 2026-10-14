@@ -54,7 +54,7 @@ const PRICING: PricingTier[] = [
       "Everything in Plus",
       "Line movement history",
       "Arbitrage, middles & same-game parlay EV",
-      "Choice of de-vig model (multiplicative or power) for fair-odds calculation",
+      "Choice of two methods for working out the true odds (advanced)",
       "Alerts for every opportunity type",
       "AI model probability, \"model agrees\" filter and alerts, and plain-language explanations",
     ],

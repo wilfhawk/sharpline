@@ -46,9 +46,9 @@ export function Dashboard() {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">+EV Opportunities</h1>
+        <h1 className="text-xl font-semibold">Best bets right now</h1>
         <p className="text-sm text-muted-foreground">
-          Sportsbook prices compared against de-vigged sharp reference odds.
+          Each row is a bet where a sportsbook pays more than it should. We work out the true odds from Pinnacle, the bookmaker sharp bettors trust most, and show how big the edge is.
         </p>
         <Link href="/games" className="mt-1 w-fit text-sm text-primary underline">Browse all games and markets</Link>
       </div>
@@ -81,7 +81,7 @@ export function Dashboard() {
 
       <Tabs defaultValue="ev" className="gap-4">
         <TabsList className="grid h-auto w-full grid-cols-2 group-data-horizontal/tabs:h-auto sm:grid-cols-4">
-          <TabsTrigger value="ev">+EV Opportunities</TabsTrigger>
+          <TabsTrigger value="ev">Best bets</TabsTrigger>
           <TabsTrigger value="arbitrage">Arbitrage</TabsTrigger>
           <TabsTrigger value="middles">Middles</TabsTrigger>
           <TabsTrigger value="parlays">Parlay Builder</TabsTrigger>
